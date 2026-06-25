@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Lock } from "lucide-react";
 import { getBook, hasPurchased } from "../services/api";
 import { useAsyncData } from "../hooks/useAsyncData";
+import { useAuth } from "../hooks/useAuth";
 
 function fallbackContent(book, chapter) {
   return [
@@ -14,10 +15,11 @@ function fallbackContent(book, chapter) {
 
 export default function BookReader() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const chapterIndex = Number(searchParams.get("chapter") || 0);
 
-  const { data: book, loading } = useAsyncData(() => getBook(id), [id]);
+  const { data: book, loading } = useAsyncData(() => getBook(id), null, [id, user?.id]);
 
   const [purchased, setPurchased] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -40,7 +42,7 @@ export default function BookReader() {
     }
 
     loadPurchase();
-  }, [id]);
+  }, [id, user?.id]);
 
   if (loading)
     return <div className="p-10 text-center text-slate-700 dark:text-slate-200">Opening reader...</div>;
@@ -71,95 +73,116 @@ export default function BookReader() {
     : fallbackContent(book, chapter);
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
+  <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
 
-      {/* SIDEBAR (CARD STAYS WHITE) */}
-      <aside className="h-fit rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+    {/* Sidebar */}
+    <aside className="h-fit rounded-[28px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 shadow-sm">
 
-        <Link
-          to={`/books/${book.id}`}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-violet-600"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to details
-        </Link>
+      <Link
+        to={`/books/${book.id}`}
+        className="inline-flex items-center gap-2 text-sm font-semibold text-violet-600 dark:text-violet-400"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to details
+      </Link>
 
-        <div className="mt-6">
+      <div className="mt-6">
 
-          <p className="text-xs font-semibold uppercase text-slate-700">
-            Chapters
-          </p>
+        <p className="text-xs font-semibold uppercase text-slate-700 dark:text-slate-300">
+          Chapters
+        </p>
 
-          <div className="mt-4 space-y-2">
+        <div className="mt-4 space-y-2">
 
-            {chapters.map((item, index) => (
-              <button
-                key={index}
-                onClick={() => setSearchParams({ chapter: String(index) })}
-                className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 border
-                  ${
-                    index === chapterIndex
-                      ? "bg-violet-600 text-white"
-                      : "bg-slate-100 text-slate-800"
-                  }`}
-              >
-                <span>{item.title}</span>
+          {chapters.map((item, index) => (
 
-                {!purchased && !item.unlocked && (
-                  <Lock className="h-4 w-4" />
-                )}
-              </button>
-            ))}
+            <button
+              key={index}
+              onClick={() =>
+                setSearchParams({ chapter: String(index) })
+              }
+              className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 transition
+              ${
+                index === chapterIndex
+                  ? "bg-violet-600 text-white"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200"
+              }`}
+            >
 
-          </div>
+              <span>{item.title}</span>
+
+              {!purchased && !item.unlocked && (
+                <Lock className="h-4 w-4" />
+              )}
+
+            </button>
+
+          ))}
+
         </div>
-      </aside>
 
-      {/* MAIN CARD (ALSO ALWAYS WHITE) */}
-      <article className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
+      </div>
 
-        <p className="text-sm uppercase tracking-[0.24em] text-violet-600">
-          {book.title}
-        </p>
+    </aside>
 
-        <h1 className="mt-3 text-4xl font-semibold text-slate-900">
-          {chapter.title}
-        </h1>
 
-        <p className="mt-3 text-sm text-slate-600">
-          by {book.author}
-        </p>
+    {/* Reader Card */}
+    <article className="rounded-[32px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-8 shadow-sm">
 
-        {canRead ? (
-          <div className="mt-10 space-y-6">
-            {paragraphs.map((p, i) => (
-              <p key={i} className="leading-8 text-slate-800">
-                {p}
-              </p>
-            ))}
-          </div>
-        ) : (
-          <div className="mt-10 rounded-3xl border p-8 text-center">
+      <p className="text-sm uppercase tracking-[0.24em] text-violet-600 dark:text-violet-400">
+        {book.title}
+      </p>
 
-            <h2 className="text-2xl font-bold text-slate-900">
-              Purchase Required
-            </h2>
+      <h1 className="mt-3 text-4xl font-semibold text-slate-900 dark:text-white">
+        {chapter.title}
+      </h1>
 
-            <p className="mt-4 text-slate-600">
-              Purchase this book to unlock all chapters.
+      <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+        by {book.author}
+      </p>
+
+      {canRead ? (
+
+        <div className="mt-10 space-y-6">
+
+          {paragraphs.map((p, i) => (
+
+            <p
+              key={i}
+              className="leading-8 text-slate-800 dark:text-slate-300"
+            >
+              {p}
             </p>
 
-            <Link
-              to={`/checkout/${book.id}`}
-              className="mt-6 inline-block rounded-xl bg-violet-600 px-6 py-3 text-white"
-            >
-              Buy Now
-            </Link>
+          ))}
 
-          </div>
-        )}
+        </div>
 
-      </article>
-    </div>
-  );
+      ) : (
+
+        <div className="mt-10 rounded-3xl border border-slate-200 dark:border-slate-700 p-8 text-center">
+
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Purchase Required
+          </h2>
+
+          <p className="mt-4 text-slate-600 dark:text-slate-400">
+            Purchase this book to unlock all chapters.
+          </p>
+
+          <Link
+            to={`/checkout/${book.id}`}
+            className="mt-6 inline-block rounded-xl bg-violet-600 px-6 py-3 text-white"
+          >
+            Buy Now
+          </Link>
+
+        </div>
+
+      )}
+
+    </article>
+
+  </div>
+);
 }

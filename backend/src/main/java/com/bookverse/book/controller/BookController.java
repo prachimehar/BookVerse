@@ -6,17 +6,21 @@ import com.bookverse.book.repository.BookRepository;
 import com.bookverse.library.repository.LibraryItemRepository;
 import com.bookverse.purchase.repository.PurchaseRepository;
 import com.bookverse.review.repository.ReviewRepository;
+import com.bookverse.security.BookVersePrincipal;
+import com.bookverse.security.SecurityUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import com.bookverse.user.Context.UserContext;
 
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/books")
@@ -38,32 +42,76 @@ public class BookController {
     }
 
     @GetMapping
-    public List<Book> all(
-            @RequestParam(required = false) String genre,
-            @RequestParam(required = false) String price,
-            @RequestParam(required = false) String sort,
-            @RequestParam(required = false) String q) {
-        return bookRepository.findAll().stream()
-                .filter(book -> "APPROVED".equalsIgnoreCase(book.getApprovalStatus()))
-                .filter(book -> genre == null || genre.equalsIgnoreCase("All")
-                        || genre.equalsIgnoreCase(book.getGenre()))
-                .filter(book -> price == null || price.equalsIgnoreCase("all")
-                        || (price.equalsIgnoreCase("free") ? book.getPrice() == 0 : book.getPrice() > 0))
-                .filter(book -> q == null || q.isBlank() || matchesSearch(book, q))
-                .sorted(sortComparator(sort))
-                .toList();
+public List<Book> all(
+        @RequestParam(required = false) String genre,
+        @RequestParam(required = false) String price,
+        @RequestParam(required = false) String sort,
+        @RequestParam(required = false) String q) {
+
+    return bookRepository.findAll().stream()
+
+            // Only approved books
+            .filter(book ->
+                    "APPROVED".equalsIgnoreCase(
+                            book.getApprovalStatus() == null
+                                    ? ""
+                                    : book.getApprovalStatus().trim()
+                    )
+            )
+
+            // Genre filter
+            .filter(book -> {
+                if (genre == null || genre.isBlank() || genre.equalsIgnoreCase("All")) {
+                    return true;
+                }
+
+                String selectedGenre = genre.trim().toLowerCase();
+                String bookGenre = book.getGenre() == null
+                        ? ""
+                        : book.getGenre().trim().toLowerCase();
+
+                return selectedGenre.equals(bookGenre);
+            })
+
+            // Price filter
+            .filter(book -> {
+                if (price == null || price.isBlank() || price.equalsIgnoreCase("all")) {
+                    return true;
+                }
+
+                if (price.equalsIgnoreCase("free")) {
+                    return book.getPrice() == 0;
+                }
+
+                if (price.equalsIgnoreCase("paid")) {
+                    return book.getPrice() > 0;
+                }
+
+                return true;
+            })
+
+            // Search filter
+            .filter(book ->
+                    q == null ||
+                    q.isBlank() ||
+                    matchesSearch(book, q)
+            )
+
+            // Sorting
+            .sorted(sortComparator(sort))
+
+            .toList();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Book> one(@PathVariable String id) {
+        String userId = currentUserIdOrNull();
 
         return bookRepository.findById(id)
                 .map(book -> {
 
-                    boolean purchased = purchaseRepository
-                            .findByUserIdAndBookId(
-                                    UserContext.DEMO_USER_ID,
-                                    book.getId())
+                    boolean purchased = userId != null && purchaseRepository
+                            .findByUserIdAndBookId(userId, book.getId())
                             .isPresent();
 
                     if (book.getPrice() > 0 && !purchased) {
@@ -112,17 +160,14 @@ public class BookController {
 
     @PostMapping
     public Book create(@RequestBody Book book) {
+        BookVersePrincipal principal = SecurityUtils.currentUser();
         validateBook(book);
         Instant now = Instant.now();
         book.setId(null);
         book.setCreatedAt(now);
         book.setUpdatedAt(now);
-        if (book.getWriterId() == null || book.getWriterId().isBlank()) {
-            book.setWriterId("writer-1");
-        }
-        if (book.getAuthor() == null || book.getAuthor().isBlank()) {
-            book.setAuthor("BookVerse Writer");
-        }
+        book.setWriterId(principal.id());
+        book.setAuthor(principal.name());
         if (book.getStatus() == null || book.getStatus().isBlank()) {
             book.setStatus(book.getPrice() > 0 ? "PAID" : "FREE");
         }
@@ -143,10 +188,14 @@ public class BookController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Book> update(@PathVariable String id, @RequestBody Book incoming) {
+    public ResponseEntity<Book> update(
+            @PathVariable String id,
+            @RequestBody Book incoming) {
         validateBook(incoming);
+        BookVersePrincipal principal = SecurityUtils.currentUser();
         return bookRepository.findById(id)
                 .map(existing -> {
+                    ensureCanModifyBook(existing, principal);
                     existing.setTitle(incoming.getTitle());
                     existing.setDescription(incoming.getDescription());
                     existing.setGenre(incoming.getGenre());
@@ -168,9 +217,11 @@ public class BookController {
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<Void> delete(@PathVariable String id) {
-        if (!bookRepository.existsById(id)) {
+        Book book = bookRepository.findById(id).orElse(null);
+        if (book == null) {
             return ResponseEntity.notFound().build();
         }
+        ensureCanModifyBook(book, SecurityUtils.currentUser());
 
         libraryItemRepository.deleteByBookId(id);
         purchaseRepository.deleteByBookId(id);
@@ -180,14 +231,21 @@ public class BookController {
     }
 
     @GetMapping("/categories")
-    public List<String> categories() {
-        return bookRepository.findAll().stream()
-                .map(Book::getGenre)
-                .filter(genre -> genre != null && !genre.isBlank())
-                .distinct()
-                .sorted()
-                .toList();
-    }
+public List<String> categories() {
+    return bookRepository.findAll().stream()
+            .map(Book::getGenre)
+            .filter(genre -> genre != null && !genre.isBlank())
+            .map(String::trim)
+            .collect(Collectors.toMap(
+                    String::toLowerCase,
+                    g -> g,
+                    (a, b) -> a
+            ))
+            .values()
+            .stream()
+            .sorted()
+            .toList();
+}
 
     private boolean matchesSearch(Book book, String query) {
         String needle = query.toLowerCase(Locale.ROOT);
@@ -215,5 +273,23 @@ public class BookController {
         if (book.getTitle() == null || book.getTitle().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Book title is required");
         }
+    }
+
+    private void ensureCanModifyBook(Book book, BookVersePrincipal principal) {
+        if (principal.roles().stream().anyMatch("admin"::equalsIgnoreCase)) {
+            return;
+        }
+
+        if (book.getWriterId() == null || !book.getWriterId().equals(principal.id())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot modify another writer's book");
+        }
+    }
+
+    private String currentUserIdOrNull() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof BookVersePrincipal principal) {
+            return principal.id();
+        }
+        return null;
     }
 }

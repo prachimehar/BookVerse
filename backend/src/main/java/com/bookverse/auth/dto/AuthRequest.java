@@ -1,4 +1,4 @@
 package com.bookverse.auth.dto;
 
-public record AuthRequest(String idToken) {
+public record AuthRequest(String email, String password) {
 }

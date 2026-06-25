@@ -1,9 +1,11 @@
 import { toast } from 'react-hot-toast'
 import { useAsyncData } from '../hooks/useAsyncData'
+import { useAuth } from '../hooks/useAuth'
 import { banUser, getAdminUsers } from '../services/api'
 
 export default function AdminUsers() {
-  const { data: users = [], setData } = useAsyncData(getAdminUsers, [])
+  const { user, roles } = useAuth()
+  const { data: users = [], setData } = useAsyncData(getAdminUsers, [], [user?.id, roles?.join('|')])
 
   const handleBan = async (id) => {
     await banUser(id)
@@ -25,7 +27,7 @@ export default function AdminUsers() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="font-semibold text-slate-950 dark:text-white">{user.name}</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{user.role}{user.banned ? ' - banned' : ''}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{(user.roles || ['reader']).join(', ')}{user.banned ? ' - banned' : ''}</p>
               </div>
               <button onClick={() => handleBan(user.id)} className="rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-rose-500/50 dark:hover:bg-rose-950/40 dark:hover:text-rose-200">Ban user</button>
             </div>

@@ -4,6 +4,62 @@ const client = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
 })
 
+function getStoredAuth() {
+  try {
+    const stored = localStorage.getItem('bookverse-auth')
+    return stored ? JSON.parse(stored) : null
+  } catch {
+    return null
+  }
+}
+
+function setStoredAuth(auth) {
+  localStorage.setItem('bookverse-auth', JSON.stringify(auth))
+}
+
+client.interceptors.request.use((config) => {
+  const auth = getStoredAuth()
+
+  if (auth?.accessToken) {
+    config.headers.Authorization = `${auth.tokenType || 'Bearer'} ${auth.accessToken}`
+  }
+
+  return config
+})
+
+client.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config
+    const auth = getStoredAuth()
+
+    if (error.response?.status === 401 && auth?.refreshToken && !originalRequest?._retry) {
+      originalRequest._retry = true
+      try {
+        const { data } = await axios.post(`${client.defaults.baseURL}/auth/refresh`, {
+          refreshToken: auth.refreshToken,
+        })
+        const nextAuth = {
+          ...auth,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+          tokenType: data.tokenType || 'Bearer',
+          user: data.user,
+          roles: data.user?.roles || [],
+          isAuthenticated: true,
+        }
+        setStoredAuth(nextAuth)
+        originalRequest.headers.Authorization = `${nextAuth.tokenType} ${nextAuth.accessToken}`
+        return client(originalRequest)
+      } catch (refreshError) {
+        localStorage.removeItem('bookverse-auth')
+      }
+    }
+
+    return Promise.reject(error)
+  },
+)
+
 export async function getBooks(params = {}) {
   const { data } = await client.get('/books', { params })
   return data
@@ -39,7 +95,16 @@ export async function getWriters() {
 }
 
 export async function getReviews(bookId) {
-  const { data } = await client.get('/reviews', { params: bookId ? { bookId } : {} })
+
+  console.log("Fetching reviews for", bookId)
+
+  const { data } = await client.get(
+      '/reviews',
+      { params: bookId ? { bookId } : {} }
+  )
+
+  console.log(data)
+
   return data
 }
 
@@ -48,8 +113,36 @@ export async function submitReview(payload) {
   return data
 }
 
-export async function demoLogin(role) {
-  const { data } = await client.post('/auth/demo', null, { params: { role } })
+export async function signup(payload) {
+  const { data } = await client.post('/auth/signup', payload)
+  return data
+}
+
+export async function loginWithEmail(payload) {
+  const { data } = await client.post('/auth/login', payload)
+  return data
+}
+
+export async function loginWithGoogle(credential) {
+  const { data } = await client.post('/auth/google', { credential })
+  return data
+}
+
+export async function logoutSession(refreshToken) {
+  await client.post('/auth/logout', { refreshToken })
+}
+
+export async function forgotPassword(email) {
+  const { data } = await client.post('/auth/forgot-password', { email })
+  return data
+}
+
+export async function resetPassword(payload) {
+  await client.post('/auth/reset-password', payload)
+}
+
+export async function becomeWriter() {
+  const { data } = await client.post('/auth/become-writer')
   return data
 }
 
@@ -83,6 +176,35 @@ export async function getWriterDashboard() {
   return data
 }
 
+export async function createWriting(payload) {
+  const { data } = await client.post('/writing', payload)
+  return data
+}
+
+export async function getMyWritings() {
+  const { data } = await client.get('/writing/my')
+  return data
+}
+
+export async function getPublicWritings(params = {}) {
+  const { data } = await client.get('/writing/public', { params })
+  return data
+}
+
+export async function getWriting(id) {
+  const { data } = await client.get(`/writing/${id}`)
+  return data
+}
+
+export async function updateWriting(id, payload) {
+  const { data } = await client.put(`/writing/${id}`, payload)
+  return data
+}
+
+export async function deleteWriting(id) {
+  await client.delete(`/writing/${id}`)
+}
+
 export async function getAdminDashboard() {
   const { data } = await client.get('/admin/dashboard')
   return data
@@ -108,6 +230,16 @@ export async function setBookApproval(id, status) {
   return data
 }
 
+export async function getPendingWritings() {
+  const { data } = await client.get('/admin/writing/pending')
+  return data
+}
+
+export async function setWritingApproval(id, status) {
+  const { data } = await client.patch(`/admin/writing/${id}/approval`, null, { params: { status } })
+  return data
+}
+
 export async function getAdminReviews() {
   const { data } = await client.get('/admin/reviews')
   return data
@@ -116,6 +248,10 @@ export async function getAdminReviews() {
 export async function markReviewReviewed(id) {
   const { data } = await client.patch(`/admin/reviews/${id}/reviewed`)
   return data
+}
+
+export async function rejectAdminReview(id) {
+  await client.delete(`/admin/reviews/${id}`)
 }
 
 export async function hasPurchased(bookId) {
@@ -129,4 +265,47 @@ export async function verifyPayment(bookId) {
   });
 
   return data;
+}
+
+export async function getMarketplaceListings() {
+  const { data } = await client.get('/marketplace')
+  return data
+}
+
+export async function getMarketplaceListing(id) {
+  const { data } = await client.get(`/marketplace/${id}`)
+  return data
+}
+
+export async function createMarketplaceListing(payload) {
+  const { data } = await client.post('/marketplace', payload)
+  return data
+}
+
+export async function getMyMarketplaceListings(sellerId) {
+  const { data } = await client.get('/marketplace/mine', { params: sellerId ? { sellerId } : {} })
+  return data
+}
+
+export async function markMarketplaceListingSold(id) {
+  const { data } = await client.patch(`/marketplace/${id}/sold`)
+  return data
+}
+
+export async function deleteMarketplaceListing(id) {
+  await client.delete(`/marketplace/${id}`)
+}
+
+export async function getAdminMarketplaceListings() {
+  const { data } = await client.get('/admin/marketplace')
+  return data
+}
+
+export async function approveMarketplaceListing(id) {
+  const { data } = await client.patch(`/admin/marketplace/${id}/approve`)
+  return data
+}
+
+export async function rejectMarketplaceListing(id) {
+  await client.delete(`/admin/marketplace/${id}`)
 }

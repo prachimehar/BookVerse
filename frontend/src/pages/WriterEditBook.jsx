@@ -3,15 +3,18 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { Plus, Trash2 } from 'lucide-react'
 import { deleteBook, getBook, updateBook } from '../services/api'
+import { useAuth } from '../hooks/useAuth'
 
 export default function WriterEditBook() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user, role } = useAuth()
   const [book, setBook] = useState(null)
 
   useEffect(() => {
+    setBook(null)
     getBook(id).then(setBook)
-  }, [id])
+  }, [id, user?.id, role])
 
   const updateField = (field, value) => {
     setBook((current) => ({ ...current, [field]: value }))

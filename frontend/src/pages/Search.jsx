@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import BookCard from '../components/ui/BookCard'
 import { getBooks } from '../services/api'
 
 export default function Search() {
-  const [query, setQuery] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [query, setQuery] = useState(searchParams.get('q') || '')
   const [filteredBooks, setFilteredBooks] = useState([])
+
+  useEffect(() => {
+    setQuery(searchParams.get('q') || '')
+  }, [searchParams])
 
   useEffect(() => {
     let active = true
@@ -16,6 +22,13 @@ export default function Search() {
     }
   }, [query])
 
+  const handleQueryChange = (event) => {
+    const value = event.target.value
+    setQuery(value)
+    const nextQuery = value.trim()
+    setSearchParams(nextQuery ? { q: nextQuery } : {})
+  }
+
   return (
     <div className="space-y-8">
       <div className="rounded-[36px] border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-950">
@@ -25,7 +38,7 @@ export default function Search() {
           <input
             type="search"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={handleQueryChange}
             placeholder="Search books, authors, or genres"
             className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-900 outline-none transition focus:border-violet-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
           />

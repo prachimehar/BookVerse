@@ -1,11 +1,13 @@
 import { BarChart3, Users, Bookmark, DollarSign } from 'lucide-react'
 import { useAsyncData } from '../hooks/useAsyncData'
+import { useAuth } from '../hooks/useAuth'
 import { getWriterDashboard } from '../services/api'
 
 const icons = [Bookmark, Users, DollarSign, BarChart3]
 
 export default function WriterDashboard() {
-  const { data } = useAsyncData(getWriterDashboard, [])
+  const { user, role } = useAuth()
+  const { data } = useAsyncData(getWriterDashboard, null, [user?.id, role])
   const stats = data?.stats || []
   const recentBooks = data?.recentBooks || []
   const pendingBooks = data?.pendingBooks || []

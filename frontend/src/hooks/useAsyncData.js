@@ -10,6 +10,7 @@ export function useAsyncData(loader, initialValue = null, dependencies = []) {
 
     setLoading(true);
     setError(null);
+    setData(initialValue);
 
     loader()
       .then((result) => {
@@ -34,5 +35,8 @@ export function useAsyncData(loader, initialValue = null, dependencies = []) {
     };
   }, dependencies);
 
-  return { data, loading, error };
+  return { data,
+    setData,
+    loading,
+    error };
 }

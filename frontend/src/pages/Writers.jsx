@@ -1,6 +1,9 @@
 
+import { Link } from 'react-router-dom'
+import { PenSquare } from 'lucide-react'
 import WriterCard from '../components/ui/WriterCard'
 import { useAsyncData } from '../hooks/useAsyncData'
+import { ROUTES } from '../constants/routes'
 import { getWriters } from '../services/api'
 
 export default function Writers() {
@@ -15,7 +18,13 @@ export default function Writers() {
             <h1 className="mt-2 text-3xl font-semibold text-slate-950 dark:text-white">Writers</h1>
             <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">Discover and follow writers who share stories you'll love.</p>
           </div>
-          
+          <Link
+            to={ROUTES.WRITER_CREATE_BOOK}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-violet-200/60 transition hover:bg-violet-500 dark:bg-violet-500 dark:shadow-black/20 dark:hover:bg-violet-400"
+          >
+            <PenSquare className="h-4 w-4" />
+            Create Book
+          </Link>
         </div>
       </div>
 
