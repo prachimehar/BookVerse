@@ -227,7 +227,9 @@ function App() {
             </Routes>
           </div>
         </div>
-        
+         
+
+         console.log("API URL:", import.meta.env.VITE_API_URL);
       </main>
       {user && <Footer />}
       <Toaster position="top-right" />
