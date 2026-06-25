@@ -5,7 +5,7 @@ import { ROUTES } from "./constants/routes";
 import { ROLES } from "./constants/roles";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { RoleProtectedRoute } from "./components/RoleProtectedRoute";
-import { Navbar } from "./components/layout/Navbar";
+import Navbar from "./components/layout/Navbar";
 import { Footer } from "./components/layout/Footer";
 import { WriterSidebar } from "./components/layout/WriterSidebar";
 import Home from "./pages/Home";
