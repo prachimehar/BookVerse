@@ -2,6 +2,7 @@ package com.bookverse.writer.controller;
 
 import com.bookverse.book.model.Book;
 import com.bookverse.book.repository.BookRepository;
+import com.bookverse.security.SecurityUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,8 +14,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/writer")
 public class WriterDashboardController {
-    private static final String DEMO_WRITER_ID = "writer-1";
-
     private final BookRepository bookRepository;
 
     public WriterDashboardController(BookRepository bookRepository) {
@@ -23,7 +22,7 @@ public class WriterDashboardController {
 
     @GetMapping("/books")
     public List<Book> books() {
-        return bookRepository.findByWriterId(DEMO_WRITER_ID);
+        return bookRepository.findByWriterId(SecurityUtils.currentUser().id());
     }
 
     @GetMapping("/dashboard")

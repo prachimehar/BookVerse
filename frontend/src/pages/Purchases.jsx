@@ -1,9 +1,11 @@
 import { useAsyncData } from "../hooks/useAsyncData";
+import { useAuth } from "../hooks/useAuth";
 import { getPurchases } from "../services/api";
 import { Link } from "react-router-dom";
 
 export default function Purchases() {
-  const { data: purchases = [], loading } = useAsyncData(getPurchases, []);
+  const { user } = useAuth();
+  const { data: purchases = [], loading } = useAsyncData(getPurchases, [], [user?.id]);
 
   if (loading) {
     return <div className="p-6">Loading purchases...</div>;

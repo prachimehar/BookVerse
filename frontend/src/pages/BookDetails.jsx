@@ -20,6 +20,9 @@ export default function BookDetails() {
   useEffect(() => {
 
     let active = true
+    setLoading(true)
+    setBook(null)
+    setReviews([])
 
     Promise.all([
       getBook(id),
@@ -39,7 +42,7 @@ export default function BookDetails() {
       active = false
     }
 
-  }, [id])
+  }, [id, user?.id])
 
   const handleSave = async () => {
 

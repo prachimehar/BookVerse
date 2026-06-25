@@ -1,9 +1,11 @@
 import BookCard from '../components/ui/BookCard'
 import { useAsyncData } from '../hooks/useAsyncData'
+import { useAuth } from '../hooks/useAuth'
 import { getLibrary } from '../services/api'
 
 export default function Library() {
-  const { data: books = [] } = useAsyncData(getLibrary, [])
+  const { user } = useAuth()
+  const { data: books = [] } = useAsyncData(getLibrary, [], [user?.id])
 
   return (
     <div className="space-y-8">

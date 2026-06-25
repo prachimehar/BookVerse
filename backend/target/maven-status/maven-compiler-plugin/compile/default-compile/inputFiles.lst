@@ -11,9 +11,17 @@ D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\book\repository\BookRepo
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\BookVerseBackendApplication.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\config\OpenApiConfig.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\config\seed\DataSeeder.java
+D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\content\controller\WritingController.java
+D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\content\model\Content.java
+D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\content\model\ContentType.java
+D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\content\model\ContentVisibility.java
+D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\content\repository\ContentRepository.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\library\controller\LibraryController.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\library\model\LibraryItem.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\library\repository\LibraryItemRepository.java
+D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\marketplace\controller\MarketplaceController.java
+D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\marketplace\model\UsedBook.java
+D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\marketplace\repository\UsedBookRepository.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\payment\controller\PaymentController.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\payment\dto\PaymentDto.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\purchase\controller\PurchaseController.java
@@ -22,6 +30,7 @@ D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\purchase\repository\Purc
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\review\controller\ReviewController.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\review\model\Review.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\review\repository\ReviewRepository.java
+D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\security\BookVersePrincipal.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\security\config\SecurityConfig.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\security\filter\JwtAuthenticationFilter.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\security\handler\CustomAccessDeniedHandler.java
@@ -30,6 +39,7 @@ D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\security\jwt\JwtProperti
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\security\jwt\JwtService.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\security\oauth\GoogleTokenVerifier.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\security\oauth\GoogleUserInfo.java
+D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\security\SecurityUtils.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\shared\constants\SecurityConstants.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\shared\enums\AccessType.java
 D:\Prachi\BookVerse\backend\src\main\java\com\bookverse\shared\enums\ApprovalStatus.java

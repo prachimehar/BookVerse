@@ -3,13 +3,16 @@ spring:
     name: bookverse-backend
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/bookverse}
-  jackson:
+      uri: mongodb+srv://prachimehar841:Prachi841@cluster0.de5zju5.mongodb.net/bookverse?retryWrites=true&w=majority
     serialization:
       INDENT_OUTPUT: true
 
 server:
-  port: 8080
+  port: ${PORT:8080}
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
 
 jwt:
   secret: ${JWT_SECRET:replace-me-with-secure-key}
@@ -17,9 +20,8 @@ jwt:
   refresh-token-expiration: 604800000
   issuer: bookverse
 
-oauth2:
-  google:
-    client-id: ${GOOGLE_CLIENT_ID:}
+google:
+  client-id: ${GOOGLE_CLIENT_ID:502840310207-lostkpb3ct42m7cc9hr54o9cbd322vm1.apps.googleusercontent.com}
 
 springdoc:
   api-docs:

@@ -1,25 +1,54 @@
 import { createContext, useEffect, useMemo, useState } from 'react'
-import { ROLES } from '../constants/roles'
+import { logoutSession } from '../services/api'
+
+const AUTH_STORAGE_KEY = 'bookverse-auth'
+const USER_SCOPED_PREFIXES = [
+  'bookverse-bookmarks',
+  'bookverse-library',
+  'bookverse-payments',
+  'bookverse-profile',
+  'bookverse-purchases',
+  'bookverse-reader-progress',
+  'bookverse-writer-dashboard',
+  'bookverse-admin-dashboard',
+]
 
 const initialAuth = {
   user: null,
-  role: null,
+  roles: [],
   accessToken: null,
   refreshToken: null,
+  tokenType: null,
   isAuthenticated: false,
 }
 
 export const AuthContext = createContext({
   ...initialAuth,
   login: () => {},
-  chooseRole: () => {},
+  hasRole: () => false,
   logout: () => {},
 })
+
+function clearUserScopedStorage() {
+  for (const storage of [localStorage, sessionStorage]) {
+    USER_SCOPED_PREFIXES.forEach((prefix) => {
+      Object.keys(storage)
+        .filter((key) => key === prefix || key.startsWith(`${prefix}:`))
+        .forEach((key) => storage.removeItem(key))
+    })
+  }
+}
+
+function primaryRole(roles = []) {
+  if (roles.includes('admin')) return 'admin'
+  if (roles.includes('writer')) return 'writer'
+  return roles[0] || null
+}
 
 export function AuthProvider({ children }) {
   const [authState, setAuthState] = useState(() => {
     try {
-      const stored = localStorage.getItem('bookverse-auth')
+      const stored = localStorage.getItem(AUTH_STORAGE_KEY)
       return stored ? JSON.parse(stored) : initialAuth
     } catch {
       return initialAuth
@@ -27,10 +56,17 @@ export function AuthProvider({ children }) {
   })
 
   useEffect(() => {
-    localStorage.setItem('bookverse-auth', JSON.stringify(authState))
+    if (authState.isAuthenticated) {
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authState))
+    } else {
+      localStorage.removeItem(AUTH_STORAGE_KEY)
+    }
   }, [authState])
 
   const login = (payload) => {
+    clearUserScopedStorage()
+    const roles = payload.user?.roles || payload.roles || ['reader']
+
     setAuthState({
       user: {
         id: payload.user?.id || payload.id || null,
@@ -40,9 +76,10 @@ export function AuthProvider({ children }) {
           payload.user?.avatar ||
           payload.avatar ||
           'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=200&q=80',
+        roles,
       },
 
-      role: payload.user?.role || payload.role || ROLES.READER,
+      roles,
 
       accessToken:
         payload.accessToken ||
@@ -53,23 +90,25 @@ export function AuthProvider({ children }) {
         payload.refreshToken ||
         null,
 
+      tokenType:
+        payload.tokenType ||
+        'Bearer',
+
       isAuthenticated: true,
     })
   }
 
-  const chooseRole = (role) => {
-    if (![ROLES.READER, ROLES.WRITER, ROLES.ADMIN].includes(role)) {
-      return
-    }
-
-    setAuthState((current) => ({
-      ...current,
-      role,
-    }))
+  const hasRole = (role) => {
+    return authState.roles?.some((value) => value.toLowerCase() === role.toLowerCase())
   }
 
   const logout = () => {
-    localStorage.removeItem('bookverse-auth')
+    const refreshToken = authState.refreshToken
+    if (refreshToken) {
+      logoutSession(refreshToken).catch(() => {})
+    }
+    clearUserScopedStorage()
+    localStorage.removeItem(AUTH_STORAGE_KEY)
     setAuthState(initialAuth)
   }
 
@@ -77,7 +116,8 @@ export function AuthProvider({ children }) {
     () => ({
       ...authState,
       login,
-      chooseRole,
+      hasRole,
+      role: primaryRole(authState.roles),
       logout,
     }),
     [authState],

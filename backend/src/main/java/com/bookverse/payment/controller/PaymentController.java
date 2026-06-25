@@ -2,7 +2,7 @@ package com.bookverse.payment.controller;
 
 import com.bookverse.purchase.model.Purchase;
 import com.bookverse.purchase.repository.PurchaseRepository;
-import com.bookverse.user.Context.UserContext;
+import com.bookverse.security.SecurityUtils;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,11 +21,13 @@ public class PaymentController {
     }
 
     @PostMapping("/verify")
-    public ResponseEntity<?> verify(@RequestBody PaymentDto dto) {
+    public ResponseEntity<?> verify(
+            @RequestBody PaymentDto dto) {
+        String userId = SecurityUtils.currentUser().id();
 
         boolean alreadyPurchased =
                 purchaseRepository
-                        .findByUserIdAndBookId(UserContext.DEMO_USER_ID, dto.getBookId())
+                        .findByUserIdAndBookId(userId, dto.getBookId())
                         .isPresent();
 
         if (!alreadyPurchased) {
@@ -33,7 +35,7 @@ public class PaymentController {
             Purchase purchase = new Purchase();
 
             purchase.setBookId(dto.getBookId());
-            purchase.setUserId(UserContext.DEMO_USER_ID);
+            purchase.setUserId(userId);
             purchase.setPurchasedAt(Instant.now());
 
             purchaseRepository.save(purchase);
@@ -51,8 +53,8 @@ public class PaymentController {
             return bookId;
         }
 
-        // public void setBookId(String bookId) {
-        //     this.bookId = bookId;
-        // }
+        public void setBookId(String bookId) {
+            this.bookId = bookId;
+        }
     }
 }

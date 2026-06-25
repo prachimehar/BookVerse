@@ -2,12 +2,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getBook, verifyPayment } from "../services/api";
 import { useAsyncData } from "../hooks/useAsyncData";
 import { toast } from "react-hot-toast";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Checkout() {
   const { id } = useParams();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  const { data: book, loading } = useAsyncData(() => getBook(id), [id]);
+  const { data: book, loading } = useAsyncData(() => getBook(id), null, [id, user?.id]);
 
   const handleConfirm = async () => {
     if (!book) return;
@@ -38,8 +40,8 @@ export default function Checkout() {
       },
 
       prefill: {
-        name: "Demo User",
-        email: "demo@bookverse.com",
+        name: user?.name || "BookVerse User",
+        email: user?.email || "",
       },
     };
 

@@ -14,6 +14,7 @@ import com.bookverse.user.repository.AppUserRepository;
 import com.bookverse.writer.model.Writer;
 import com.bookverse.writer.repository.WriterRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -27,6 +28,7 @@ public class DataSeeder implements CommandLineRunner {
     private final AppUserRepository userRepository;
     private final LibraryItemRepository libraryItemRepository;
     private final PurchaseRepository purchaseRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public DataSeeder(
             BookRepository bookRepository,
@@ -34,7 +36,8 @@ public class DataSeeder implements CommandLineRunner {
             ReviewRepository reviewRepository,
             AppUserRepository userRepository,
             LibraryItemRepository libraryItemRepository,
-            PurchaseRepository purchaseRepository
+            PurchaseRepository purchaseRepository,
+            PasswordEncoder passwordEncoder
     ) {
         this.bookRepository = bookRepository;
         this.writerRepository = writerRepository;
@@ -42,30 +45,58 @@ public class DataSeeder implements CommandLineRunner {
         this.userRepository = userRepository;
         this.libraryItemRepository = libraryItemRepository;
         this.purchaseRepository = purchaseRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public void run(String... args) {
-        if (bookRepository.count() > 0) {
-            return;
+        seedUsers();
+
+        if (writerRepository.count() == 0) {
+            seedWriters();
         }
 
-        seedUsers();
-        seedWriters();
-        seedBooks();
-        seedReviews();
-        seedReaderActivity();
+        if (bookRepository.count() == 0) {
+            seedBooks();
+        }
+
+        if (reviewRepository.count() == 0) {
+            seedReviews();
+        }
+
+        if (libraryItemRepository.count() == 0) {
+            seedLibraryItems();
+        }
+
+        if (purchaseRepository.count() == 0) {
+            seedPurchases();
+        }
     }
 
     private void seedUsers() {
-        userRepository.saveAll(List.of(
-                user("user-reader", "BookVerse Guest", "reader@bookverse.app", "reader", false),
-                user("user-writer", "BookVerse Writer", "writer@bookverse.app", "writer", false),
-                user("user-admin", "BookVerse Admin", "admin@bookverse.app", "admin", false),
-                user("user-nina", "Nina Hart", "nina@example.com", "writer", false),
-                user("user-jason", "Jason Cole", "jason@example.com", "writer", false),
-                user("user-maya", "Maya Liu", "maya@example.com", "reader", false)
-        ));
+        List.of(
+                user("user-reader", "BookVerse Guest", "reader@bookverse.app", List.of("reader"), false),
+                user("user-writer", "BookVerse Writer", "writer@bookverse.app", List.of("reader", "writer"), false),
+                user("user-admin", "BookVerse Admin", "admin@bookverse.app", List.of("admin"), false),
+                user("user-nina", "Nina Hart", "nina@example.com", List.of("reader", "writer"), false),
+                user("user-jason", "Jason Cole", "jason@example.com", List.of("reader", "writer"), false),
+                user("user-maya", "Maya Liu", "maya@example.com", List.of("reader"), false)
+        ).forEach(this::upsertSeedUser);
+    }
+
+    private void upsertSeedUser(AppUser seedUser) {
+        AppUser user = userRepository.findByEmail(seedUser.getEmail()).orElse(seedUser);
+        if (user.getId() == null || user.getId().isBlank()) {
+            user.setId(seedUser.getId());
+        }
+        user.setName(seedUser.getName());
+        user.setEmail(seedUser.getEmail());
+        user.setRoles(seedUser.getRoles());
+        user.setPasswordHash(seedUser.getPasswordHash());
+        user.setBanned(seedUser.isBanned());
+        user.setAvatar(seedUser.getAvatar());
+        user.setProvider("local");
+        userRepository.save(user);
     }
 
     private void seedWriters() {
@@ -96,17 +127,21 @@ public class DataSeeder implements CommandLineRunner {
         ));
     }
 
-    private void seedReaderActivity() {
+    private void seedLibraryItems() {
         libraryItemRepository.saveAll(List.of(libraryItem("book-1"), libraryItem("book-3"), libraryItem("book-5")));
+    }
+
+    private void seedPurchases() {
         purchaseRepository.saveAll(List.of(purchase("book-2", 199), purchase("book-4", 149)));
     }
 
-    private AppUser user(String id, String name, String email, String role, boolean banned) {
+    private AppUser user(String id, String name, String email, List<String> roles, boolean banned) {
         AppUser user = new AppUser();
         user.setId(id);
         user.setName(name);
         user.setEmail(email);
-        user.setRole(role);
+        user.setRoles(roles);
+        user.setPasswordHash(passwordEncoder.encode("password123"));
         user.setBanned(banned);
         user.setAvatar("https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=200&q=80");
         return user;

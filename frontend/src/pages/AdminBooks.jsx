@@ -1,9 +1,11 @@
 import { useAsyncData } from '../hooks/useAsyncData'
+import { useAuth } from '../hooks/useAuth'
 import { getAdminBooks, setBookApproval } from '../services/api'
 import { toast } from 'react-hot-toast'
 
 export default function AdminBooks() {
-  const { data: books = [], setData } = useAsyncData(getAdminBooks, [])
+  const { user, role } = useAuth()
+  const { data: books = [], setData } = useAsyncData(getAdminBooks, [], [user?.id, role])
 
   const updateApproval = async (bookId, status) => {
     await setBookApproval(bookId, status)

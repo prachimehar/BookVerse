@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom'
 import { useAsyncData } from '../hooks/useAsyncData'
+import { useAuth } from '../hooks/useAuth'
 import { getWriterBooks } from '../services/api'
 
 export default function WriterBooks() {
-  const { data: books = [] } = useAsyncData(getWriterBooks, [])
+  const { user, role } = useAuth()
+  const { data: books = [] } = useAsyncData(getWriterBooks, [], [user?.id, role])
 
   return (
     <div className="space-y-8">
