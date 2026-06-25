@@ -3,7 +3,7 @@ spring:
     name: bookverse-backend
   data:
     mongodb:
-      uri: mongodb+srv://prachimehar841:Prachi841@cluster0.de5zju5.mongodb.net/bookverse?retryWrites=true&w=majority
+      uri: ${MONGODB_URI:mongodb+srv://prachimehar841:Prachi841@cluster0.de5zju5.mongodb.net/bookverse?retryWrites=true&w=majority}
     serialization:
       INDENT_OUTPUT: true
 
@@ -12,10 +12,10 @@ server:
 
 app:
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173,https://bookverse.vercel.app}
 
 jwt:
-  secret: ${JWT_SECRET:replace-me-with-secure-key}
+  secret: ${JWT_SECRET:adgcQwqH1pGrtshu4MON0WAiyB6S57XmfkRxZbPn}
   access-token-expiration: 900000
   refresh-token-expiration: 604800000
   issuer: bookverse
