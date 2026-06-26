@@ -1,7 +1,7 @@
 package com.bookverse.shared.enums;
 
 public enum Role {
-    ADMIN,
-    READER,
-    WRITER
+    ROLE_READER,
+    ROLE_WRITER,
+    ROLE_ADMIN
 }
