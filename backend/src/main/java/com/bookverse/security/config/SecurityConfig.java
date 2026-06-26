@@ -64,7 +64,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         // writer only (FIXED)
-                        .requestMatchers("/api/writer/**").hasRole("WRITER")
+                        .requestMatchers("/api/auth/become-writer").authenticated()
                         .requestMatchers("/api/writing/**").hasRole("WRITER")
 
                         .requestMatchers(HttpMethod.POST, "/api/books").hasRole("WRITER")

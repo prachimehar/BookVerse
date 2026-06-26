@@ -162,16 +162,23 @@ public AuthResponse becomeWriter() {
     AppUser user = userRepository.findById(SecurityUtils.currentUser().id())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
+    System.out.println("BEFORE ROLES: " + user.getRoles());
+
     if (user.getRoles() == null) {
         user.setRoles(new ArrayList<>());
     }
 
-    if (user.getRoles().stream().noneMatch(r -> r.equals("ROLE_WRITER"))) {
+    if (!user.getRoles().contains("ROLE_WRITER")) {
         user.getRoles().add("ROLE_WRITER");
     }
 
-    return issueTokens(userRepository.save(user));
+    AppUser saved = userRepository.save(user);
+
+    System.out.println("AFTER ROLES: " + saved.getRoles());
+
+    return issueTokens(saved);
 }
+
 
     // ---------------- TOKENS ----------------
     private AuthResponse issueTokens(AppUser user) {
