@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
+
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -35,8 +37,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        // ✅ IMPORTANT: skip auth endpoints completely
-        if (path.startsWith("/auth/") || path.startsWith("/api/auth/")
+        // skip auth endpoints
+        if (path.startsWith("/api/auth/")
                 || path.startsWith("/v3/api-docs")
                 || path.startsWith("/swagger-ui")) {
             filterChain.doFilter(request, response);
@@ -57,38 +59,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         .filter(user -> !user.isBanned())
                         .ifPresent(user -> {
 
+                            List<String> roles = jwtService.roles(claims);
+
                             BookVersePrincipal principal =
                                     new BookVersePrincipal(
                                             user.getId(),
                                             user.getName(),
                                             user.getEmail(),
-                                            user.getRoles()
+                                            roles
                                     );
 
-                            UsernamePasswordAuthenticationToken authentication =
+                            UsernamePasswordAuthenticationToken auth =
                                     new UsernamePasswordAuthenticationToken(
                                             principal,
                                             null,
                                             principal.getAuthorities()
                                     );
 
-                            authentication.setDetails(
+                            auth.setDetails(
                                     new WebAuthenticationDetailsSource().buildDetails(request)
                             );
 
-                            SecurityContextHolder.getContext()
-                                    .setAuthentication(authentication);
+                            SecurityContextHolder.getContext().setAuthentication(auth);
                         });
 
-            } catch (Exception ignored) {
+            } catch (Exception e) {
                 SecurityContextHolder.clearContext();
             }
         }
 
         filterChain.doFilter(request, response);
-
-        
     }
-
-    
 }

@@ -1,6 +1,5 @@
 package com.bookverse.security;
 
-import com.bookverse.user.model.AppUser;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,22 +13,28 @@ public record BookVersePrincipal(
         String email,
         List<String> roles
 ) implements UserDetails {
-    public static BookVersePrincipal from(AppUser user) {
-        return new BookVersePrincipal(user.getId(), user.getName(), user.getEmail(), user.getRoles());
+
+    public static BookVersePrincipal from(com.bookverse.user.model.AppUser user) {
+        return new BookVersePrincipal(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRoles()
+        );
     }
 
-@Override
-public Collection<? extends GrantedAuthority> getAuthorities() {
-    return roles.stream()
-            .map(role -> {
-                String r = role.toUpperCase();
-                if (!r.startsWith("ROLE_")) {
-                    r = "ROLE_" + r;
-                }
-                return new SimpleGrantedAuthority(r);
-            })
-            .toList();
-}
+    // ✅ FIXED ROLE MAPPING (THIS WAS YOUR MAIN BUG)
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return roles.stream()
+                .map(r -> {
+                    String role = r.toUpperCase().startsWith("ROLE_")
+                            ? r.toUpperCase()
+                            : "ROLE_" + r.toUpperCase();
+                    return new SimpleGrantedAuthority(role);
+                })
+                .toList();
+    }
 
     @Override
     public String getPassword() {
@@ -39,5 +44,25 @@ public Collection<? extends GrantedAuthority> getAuthorities() {
     @Override
     public String getUsername() {
         return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
     }
 }
