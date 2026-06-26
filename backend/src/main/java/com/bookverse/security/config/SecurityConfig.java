@@ -62,10 +62,10 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
                     ).permitAll()
 
                     .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                    .requestMatchers("/api/writer/**").hasRole("WRITER")
-                    .requestMatchers("/api/writing/**").hasRole("WRITER")
+                    .requestMatchers("/api/writer/**").hasAuthority("writer")
+                    .requestMatchers("/api/writing/**").hasAuthority("writer")
 
-                    .requestMatchers(HttpMethod.POST, "/api/books").hasRole("WRITER")
+                    .requestMatchers(HttpMethod.POST, "/api/books").hasAuthority("writer")
                     .requestMatchers(HttpMethod.PUT, "/api/books/**").hasAnyRole("WRITER", "ADMIN")
                     .requestMatchers(HttpMethod.DELETE, "/api/books/**").hasAnyRole("WRITER", "ADMIN")
 

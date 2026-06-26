@@ -19,11 +19,11 @@ public record BookVersePrincipal(
     }
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return roles.stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
-                .toList();
-    }
+public Collection<? extends GrantedAuthority> getAuthorities() {
+    return roles.stream()
+        .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
+        .toList();
+}
 
     @Override
     public String getPassword() {
