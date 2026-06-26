@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Configuration
+@EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
 
@@ -34,62 +36,44 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    return http
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(session ->
+                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .formLogin(form -> form.disable())
+            .httpBasic(basic -> basic.disable())
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(
+                            "/api/auth/**",
+                            "/v3/api-docs/**",
+                            "/swagger-ui/**",
+                            "/swagger-ui.html"
+                    ).permitAll()
 
-        return http
-                // 🔴 Disable CSRF (REST API + JWT)
-                .csrf(csrf -> csrf.disable())
+                    .requestMatchers(HttpMethod.GET,
+                            "/api/books/**",
+                            "/api/writers/**",
+                            "/api/marketplace/**",
+                            "/api/reviews/**",
+                            "/api/writing/public"
+                    ).permitAll()
 
-                // 🔴 Enable CORS
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                    .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                    .requestMatchers("/api/writer/**").hasRole("WRITER")
+                    .requestMatchers("/api/writing/**").hasRole("WRITER")
 
-                // 🔴 Stateless session (JWT based auth)
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                    .requestMatchers(HttpMethod.POST, "/api/books").hasRole("WRITER")
+                    .requestMatchers(HttpMethod.PUT, "/api/books/**").hasAnyRole("WRITER", "ADMIN")
+                    .requestMatchers(HttpMethod.DELETE, "/api/books/**").hasAnyRole("WRITER", "ADMIN")
 
-                // 🔐 Authorization rules
-                .authorizeHttpRequests(auth -> auth
-
-                        // ✅ AUTH ENDPOINTS (FIX FOR YOUR 403 ISSUE)
-                        .requestMatchers("/auth/**", "/api/auth/**").permitAll()
-
-                        // Swagger / docs
-                        .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
-
-                        // Public GET APIs
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/books/**",
-                                "/api/writers/**",
-                                "/api/marketplace/**",
-                                "/api/reviews/**"
-                        ).permitAll()
-
-                        .requestMatchers(HttpMethod.GET, "/api/writing/public").permitAll()
-
-                        // Role-based endpoints
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/writer/**").hasRole("WRITER")
-                        .requestMatchers("/api/writing/**").hasRole("WRITER")
-
-                        .requestMatchers(HttpMethod.POST, "/api/books").hasRole("WRITER")
-                        .requestMatchers(HttpMethod.PUT, "/api/books/**").hasAnyRole("WRITER", "ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/books/**").hasAnyRole("WRITER", "ADMIN")
-
-                        // Everything else requires authentication
-                        .anyRequest().authenticated()
-                )
-
-                // 🔴 JWT filter
-                .addFilterBefore(jwtAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class)
-
-                .build();
-    }
+                    .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .build();
+}
 
     // ----------------------------
     // PASSWORD ENCODER
