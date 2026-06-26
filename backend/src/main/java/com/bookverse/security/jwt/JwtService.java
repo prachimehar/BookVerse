@@ -17,20 +17,27 @@ import java.util.List;
 
 @Service
 public class JwtService {
+
     private final JwtProperties properties;
 
     public JwtService(JwtProperties properties) {
         this.properties = properties;
     }
 
+    // ✅ ALWAYS STORE CLEAN ROLE FORMAT: ROLE_WRITER, ROLE_ADMIN, ROLE_READER
     public String createAccessToken(AppUser user) {
         Instant now = Instant.now();
+
+        List<String> roles = user.getRoles().stream()
+                .map(r -> r.toUpperCase().startsWith("ROLE_") ? r.toUpperCase() : "ROLE_" + r.toUpperCase())
+                .toList();
+
         return Jwts.builder()
                 .setIssuer(properties.getIssuer())
                 .setSubject(user.getId())
                 .claim("email", user.getEmail())
                 .claim("name", user.getName())
-                .claim(SecurityConstants.TOKEN_CLAIM_ROLES, user.getRoles())
+                .claim(SecurityConstants.TOKEN_CLAIM_ROLES, roles)
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(now.plusMillis(properties.getAccessTokenExpiration())))
                 .signWith(Keys.hmacShaKeyFor(signingKey()), SignatureAlgorithm.HS256)
@@ -46,13 +53,18 @@ public class JwtService {
                 .getBody();
     }
 
-    @SuppressWarnings("unchecked")
+    // ✅ SAFE ROLE EXTRACTION
     public List<String> roles(Claims claims) {
         Object roles = claims.get(SecurityConstants.TOKEN_CLAIM_ROLES);
+
         if (roles instanceof List<?> list) {
-            return list.stream().map(String::valueOf).toList();
+            return list.stream()
+                    .map(String::valueOf)
+                    .map(r -> r.toUpperCase().startsWith("ROLE_") ? r.toUpperCase() : "ROLE_" + r.toUpperCase())
+                    .toList();
         }
-        return List.of("reader");
+
+        return List.of("ROLE_READER");
     }
 
     private byte[] signingKey() {
