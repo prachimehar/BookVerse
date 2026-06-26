@@ -36,56 +36,52 @@ public class SecurityConfig {
     }
 
     @Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    return http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(session ->
-                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .formLogin(form -> form.disable())
-            .httpBasic(basic -> basic.disable())
-            .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(
-                            "/api/auth/**",
-                            "/v3/api-docs/**",
-                            "/swagger-ui/**",
-                            "/swagger-ui.html"
-                    ).permitAll()
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
+                .authorizeHttpRequests(auth -> auth
 
-                    .requestMatchers(HttpMethod.GET,
-                            "/api/books/**",
-                            "/api/writers/**",
-                            "/api/marketplace/**",
-                            "/api/reviews/**",
-                            "/api/writing/public"
-                    ).permitAll()
+                        // public APIs
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
-                    .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                    .requestMatchers("/api/writer/**").hasAuthority("writer")
-                    .requestMatchers("/api/writing/**").hasAuthority("writer")
+                        // public GET APIs
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/books/**",
+                                "/api/writers/**",
+                                "/api/marketplace/**",
+                                "/api/reviews/**",
+                                "/api/writing/public"
+                        ).permitAll()
 
-                    .requestMatchers(HttpMethod.POST, "/api/books").hasAuthority("writer")
-                    .requestMatchers(HttpMethod.PUT, "/api/books/**").hasAnyRole("WRITER", "ADMIN")
-                    .requestMatchers(HttpMethod.DELETE, "/api/books/**").hasAnyRole("WRITER", "ADMIN")
+                        // admin only
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                    .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            .build();
-}
+                        // writer only (FIXED)
+                        .requestMatchers("/api/writer/**").hasRole("WRITER")
+                        .requestMatchers("/api/writing/**").hasRole("WRITER")
 
-    // ----------------------------
-    // PASSWORD ENCODER
-    // ----------------------------
+                        .requestMatchers(HttpMethod.POST, "/api/books").hasRole("WRITER")
+                        .requestMatchers(HttpMethod.PUT, "/api/books/**").hasAnyRole("WRITER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/books/**").hasAnyRole("WRITER", "ADMIN")
+
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // ----------------------------
-    // CORS CONFIGURATION
-    // ----------------------------
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
@@ -98,17 +94,11 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
                         .toList()
         );
 
-        configuration.setAllowedMethods(List.of(
-                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
-        ));
-
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
-
         configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
-
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
 
         return source;

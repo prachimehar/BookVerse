@@ -18,11 +18,19 @@ public record BookVersePrincipal(
         return new BookVersePrincipal(user.getId(), user.getName(), user.getEmail(), user.getRoles());
     }
 
-    @Override
+ @Override
 public Collection<? extends GrantedAuthority> getAuthorities() {
     return roles.stream()
-        .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
-        .toList();
+            .map(role -> {
+                String normalized = role.toUpperCase();
+
+                if (!normalized.startsWith("ROLE_")) {
+                    normalized = "ROLE_" + normalized;
+                }
+
+                return new SimpleGrantedAuthority(normalized);
+            })
+            .toList();
 }
 
     @Override

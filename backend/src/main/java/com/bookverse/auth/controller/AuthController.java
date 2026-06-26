@@ -66,7 +66,7 @@ public class AuthController {
         user.setName(request.name().trim());
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
-        user.setRoles(new ArrayList<>(List.of("reader")));
+        user.setRoles(new ArrayList<>(List.of("ROLE_READER")));
         user.setProvider("local");
         user.setBanned(false);
 
@@ -103,7 +103,7 @@ public class AuthController {
         AppUser user = userRepository.findByEmail(email).orElseGet(() -> {
             AppUser u = new AppUser();
             u.setEmail(email);
-            u.setRoles(new ArrayList<>(List.of("reader")));
+            u.setRoles(new ArrayList<>(List.of("ROLE_READER")));
             u.setProvider("google");
             u.setBanned(false);
             return u;
@@ -157,21 +157,21 @@ public class AuthController {
 
     // ---------------- BECOME WRITER ----------------
     @PostMapping("/become-writer")
-    public AuthResponse becomeWriter() {
+public AuthResponse becomeWriter() {
 
-        AppUser user = userRepository.findById(SecurityUtils.currentUser().id())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+    AppUser user = userRepository.findById(SecurityUtils.currentUser().id())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
-        if (user.getRoles() == null) {
-            user.setRoles(new ArrayList<>());
-        }
-
-        if (user.getRoles().stream().noneMatch(r -> r.equalsIgnoreCase("writer"))) {
-            user.getRoles().add("writer");
-        }
-
-        return issueTokens(userRepository.save(user));
+    if (user.getRoles() == null) {
+        user.setRoles(new ArrayList<>());
     }
+
+    if (user.getRoles().stream().noneMatch(r -> r.equals("ROLE_WRITER"))) {
+        user.getRoles().add("ROLE_WRITER");
+    }
+
+    return issueTokens(userRepository.save(user));
+}
 
     // ---------------- TOKENS ----------------
     private AuthResponse issueTokens(AppUser user) {
