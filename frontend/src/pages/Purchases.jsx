@@ -8,14 +8,20 @@ export default function Purchases() {
   const { data: purchases = [], loading } = useAsyncData(getPurchases, [], [user?.id]);
 
   if (loading) {
-    return <div className="p-6">Loading purchases...</div>;
+    return (
+      <div className="p-6 text-slate-900 dark:text-slate-100">
+        Loading purchases...
+      </div>
+    );
   }
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[36px] border bg-white p-8 shadow-sm">
-        <h1 className="text-3xl font-semibold">Purchase History</h1>
-        <p className="mt-2 text-sm text-slate-500">
+      <div className="rounded-[36px] border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+        <h1 className="text-3xl font-semibold text-slate-950 dark:text-white">
+          Purchase History
+        </h1>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
           Your orders and reading history
         </p>
       </div>
@@ -24,7 +30,7 @@ export default function Purchases() {
         {purchases.map((item) => (
           <div
             key={item.bookId}
-            className="rounded-[32px] border bg-white p-6 shadow-sm"
+            className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950"
           >
             <div className="flex justify-between items-center">
               <div className="flex gap-4 items-center">
@@ -34,26 +40,29 @@ export default function Purchases() {
                 />
 
                 <div>
-                  <h2 className="font-semibold">{item.title}</h2>
-                  <p className="text-sm text-slate-500">
-                    Purchased on{" "}{item.purchasedAt ? (
-  new Date(item.purchasedAt).toLocaleString()
-) : (
-  "Recently purchased"
-)}
+                  <h2 className="font-semibold text-slate-950 dark:text-white">
+                    {item.title}
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Purchased on{" "}
+                    {item.purchasedAt ? (
+                      new Date(item.purchasedAt).toLocaleString()
+                    ) : (
+                      "Recently purchased"
+                    )}
                   </p>
 
                   <Link
                     to={`/books/${item.bookId}/read`}
-                    className="text-violet-600 text-sm"
+                    className="text-sm text-violet-600 dark:text-violet-400"
                   >
                     Read again
                   </Link>
                 </div>
               </div>
 
-              <div className="font-semibold text-violet-600">
-                â‚¹ {item.price}
+              <div className="font-semibold text-violet-600 dark:text-violet-400">
+                ₹ {item.price}
               </div>
             </div>
           </div>

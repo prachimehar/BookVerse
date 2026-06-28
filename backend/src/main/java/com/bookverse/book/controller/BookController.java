@@ -85,6 +85,17 @@ public class BookController {
                 .toList();
     }
 
+    // ---------------- GET CATEGORIES ----------------
+@GetMapping("/categories")
+public List<String> categories() {
+    return bookRepository.findAll().stream()
+            .map(Book::getGenre)
+            .filter(g -> g != null && !g.isBlank())
+            .distinct()
+            .sorted()
+            .toList();
+}
+
     // ---------------- GET SINGLE BOOK ----------------
     @GetMapping("/{id}")
     public ResponseEntity<Book> one(@PathVariable String id) {
