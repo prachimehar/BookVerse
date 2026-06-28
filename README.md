@@ -138,7 +138,7 @@ BookVerse is a modern platform where readers can discover books, writers can pub
 
 ## 📁 Project Structure
 
-
+```
 BookVerse
 │
 ├── frontend
@@ -165,17 +165,20 @@ BookVerse
 ## 🚀 Getting Started
 
 ### Clone Repository
-
+```bash
 git clone https://github.com/yourusername/bookverse.git
 cd bookverse
+
 Backend Setup
 cd backend
 ./mvnw spring-boot:run
+
 Frontend Setup
 cd frontend
 npm install
 npm run dev
 
+---
 ##🔐 User Roles
 
 ###👤 Reader
