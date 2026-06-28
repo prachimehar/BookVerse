@@ -311,3 +311,13 @@ export async function approveMarketplaceListing(id) {
 export async function rejectMarketplaceListing(id) {
   await client.delete(`/admin/marketplace/${id}`)
 }
+
+export async function toggleLikeBook(id) {
+  const { data } = await client.post(`/books/${id}/like`)
+  return data
+}
+
+export async function toggleFollowWriter(id) {
+  const { data } = await client.post(`/writers/${id}/follow`)
+  return data
+}

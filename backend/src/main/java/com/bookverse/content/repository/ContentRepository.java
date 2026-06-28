@@ -18,4 +18,5 @@ public interface ContentRepository extends MongoRepository<Content, String> {
             ApprovalStatus approvalStatus,
             List<ContentType> types
     );
+    boolean existsByAuthorIdAndTitleIgnoreCaseAndType(String authorId, String title, ContentType type);
 }
