@@ -33,8 +33,9 @@ client.interceptors.response.use(
     const originalRequest = error.config
     const auth = getStoredAuth()
 
-    if (error.response?.status === 401 && auth?.refreshToken && !originalRequest?._retry) {
-      originalRequest._retry = true
+const status = error.response?.status
+if ((status === 401 || status === 403) && auth?.refreshToken && !originalRequest?._retry) {      
+  originalRequest._retry = true
       try {
         const { data } = await axios.post(`${client.defaults.baseURL}/auth/refresh`, {
           refreshToken: auth.refreshToken,
@@ -52,6 +53,7 @@ client.interceptors.response.use(
         originalRequest.headers.Authorization = `${nextAuth.tokenType} ${nextAuth.accessToken}`
         return client(originalRequest)
       } catch (refreshError) {
+        console.error('Token refresh failed', refreshError)
         localStorage.removeItem('bookverse-auth')
       }
     }

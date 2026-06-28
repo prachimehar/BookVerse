@@ -24,7 +24,7 @@ public class AppUser {
     private String passwordHash;
 
     // ✅ SINGLE SOURCE OF TRUTH
-    private List<String> roles = new ArrayList<>();
+    private List<String> roles = new ArrayList<>(List.of("ROLE_READER"));
 
     private boolean banned;
     private String provider = "local";

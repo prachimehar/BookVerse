@@ -56,7 +56,7 @@ export default function Checkout() {
 
   if (loading) {
     return (
-      <div className="rounded-[36px] border border-slate-200 bg-white p-10 text-center">
+      <div className="rounded-[36px] border border-slate-200 bg-white p-10 text-center text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
         Loading checkout...
       </div>
     );
@@ -64,7 +64,7 @@ export default function Checkout() {
 
   if (!book) {
     return (
-      <div className="rounded-[36px] border border-slate-200 bg-white p-10 text-center">
+      <div className="rounded-[36px] border border-slate-200 bg-white p-10 text-center text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
         Book not found
       </div>
     );
@@ -72,9 +72,11 @@ export default function Checkout() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="rounded-[36px] border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="rounded-[36px] border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-950">
 
-        <h1 className="text-3xl font-semibold">Checkout</h1>
+        <h1 className="text-3xl font-semibold text-slate-950 dark:text-white">
+          Checkout
+        </h1>
 
         <img
           src={book.cover}
@@ -82,13 +84,17 @@ export default function Checkout() {
           className="mt-6 h-80 w-full rounded-3xl object-cover"
         />
 
-        <h2 className="mt-6 text-2xl font-semibold">{book.title}</h2>
+        <h2 className="mt-6 text-2xl font-semibold text-slate-950 dark:text-white">
+          {book.title}
+        </h2>
 
-        <p className="text-slate-600">by {book.author}</p>
+        <p className="text-slate-600 dark:text-slate-400">by {book.author}</p>
 
-        <div className="mt-6 rounded-2xl bg-slate-100 p-4">
-          <p className="text-lg font-semibold">Total Amount</p>
-          <p className="mt-2 text-2xl font-bold text-violet-600">
+        <div className="mt-6 rounded-2xl bg-slate-100 p-4 dark:bg-slate-900">
+          <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            Total Amount
+          </p>
+          <p className="mt-2 text-2xl font-bold text-violet-600 dark:text-violet-400">
             Rs {book.price}
           </p>
         </div>
@@ -96,14 +102,14 @@ export default function Checkout() {
         <div className="mt-8 flex gap-4">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-2xl border px-6 py-3 font-semibold"
+            className="rounded-2xl border border-slate-200 px-6 py-3 font-semibold text-slate-900 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-900"
           >
             Back
           </button>
 
           <button
             onClick={handleConfirm}
-            className="rounded-2xl bg-violet-600 px-6 py-3 font-semibold text-white"
+            className="rounded-2xl bg-violet-600 px-6 py-3 font-semibold text-white transition hover:bg-violet-500 dark:bg-violet-600 dark:hover:bg-violet-500"
           >
             Confirm Purchase
           </button>

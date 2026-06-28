@@ -1,131 +1,117 @@
-import { createContext, useEffect, useMemo, useState } from 'react'
-import { logoutSession } from '../services/api'
+import { createContext, useEffect, useMemo, useState } from "react";
+import { logoutSession } from "../services/api";
 
-const AUTH_STORAGE_KEY = 'bookverse-auth'
-const USER_SCOPED_PREFIXES = [
-  'bookverse-bookmarks',
-  'bookverse-library',
-  'bookverse-payments',
-  'bookverse-profile',
-  'bookverse-purchases',
-  'bookverse-reader-progress',
-  'bookverse-writer-dashboard',
-  'bookverse-admin-dashboard',
-]
+const AUTH_STORAGE_KEY = "bookverse-auth";
 
 const initialAuth = {
   user: null,
   roles: [],
   accessToken: null,
   refreshToken: null,
-  tokenType: null,
+  tokenType: "Bearer",
   isAuthenticated: false,
-}
+};
 
 export const AuthContext = createContext({
   ...initialAuth,
   login: () => {},
-  hasRole: () => false,
   logout: () => {},
-})
-
-function clearUserScopedStorage() {
-  for (const storage of [localStorage, sessionStorage]) {
-    USER_SCOPED_PREFIXES.forEach((prefix) => {
-      Object.keys(storage)
-        .filter((key) => key === prefix || key.startsWith(`${prefix}:`))
-        .forEach((key) => storage.removeItem(key))
-    })
-  }
-}
-
-function primaryRole(roles = []) {
-  if (roles.includes('admin')) return 'admin'
-  if (roles.includes('writer')) return 'writer'
-  return roles[0] || null
-}
+  hasRole: () => false,
+  role: null,
+});
 
 export function AuthProvider({ children }) {
   const [authState, setAuthState] = useState(() => {
     try {
-      const stored = localStorage.getItem(AUTH_STORAGE_KEY)
-      return stored ? JSON.parse(stored) : initialAuth
+      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : initialAuth;
     } catch {
-      return initialAuth
+      return initialAuth;
     }
-  })
+  });
 
+  // persist auth
   useEffect(() => {
     if (authState.isAuthenticated) {
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authState))
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authState));
     } else {
-      localStorage.removeItem(AUTH_STORAGE_KEY)
+      localStorage.removeItem(AUTH_STORAGE_KEY);
     }
-  }, [authState])
+  }, [authState]);
 
+  // ✅ LOGIN (FIXED)
   const login = (payload) => {
-    clearUserScopedStorage()
-    const roles = payload.user?.roles || payload.roles || ['reader']
+    const user = payload.user || payload;
+
+    const roles = user.roles || payload.roles || ["ROLE_READER"];
+
+    const normalizedRoles = roles.map((r) =>
+      r.toUpperCase().startsWith("ROLE_")
+        ? r.toUpperCase()
+        : `ROLE_${r.toUpperCase()}`
+    );
 
     setAuthState({
       user: {
-        id: payload.user?.id || payload.id || null,
-        name: payload.user?.name || payload.name || 'BookVerse Reader',
-        email: payload.user?.email || payload.email || '',
+        id: user.id || null,
+        name: user.name || "BookVerse User",
+        email: user.email || "",
         avatar:
-          payload.user?.avatar ||
-          payload.avatar ||
-          'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=200&q=80',
-        roles,
+          user.avatar ||
+          "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=200&q=80",
+        roles: normalizedRoles,
       },
 
-      roles,
+      roles: normalizedRoles,
 
-      accessToken:
-        payload.accessToken ||
-        payload.token ||
-        null,
-
-      refreshToken:
-        payload.refreshToken ||
-        null,
-
-      tokenType:
-        payload.tokenType ||
-        'Bearer',
+      accessToken: payload.accessToken || null,
+      refreshToken: payload.refreshToken || null,
+      tokenType: payload.tokenType || "Bearer",
 
       isAuthenticated: true,
-    })
-  }
+    });
 
+    // ❌ IMPORTANT: DO NOT set axios headers here anymore
+    // interceptor handles it
+  };
+
+  // role check
   const hasRole = (role) => {
-    return authState.roles?.some((value) => value.toLowerCase() === role.toLowerCase())
-  }
+    const normalized = `ROLE_${role.toUpperCase()}`;
+    return authState.roles?.includes(normalized);
+  };
+
+  const role = useMemo(() => {
+    if (authState.roles.includes("ROLE_ADMIN")) return "admin";
+    if (authState.roles.includes("ROLE_WRITER")) return "writer";
+    return "reader";
+  }, [authState.roles]);
 
   const logout = () => {
-    const refreshToken = authState.refreshToken
+    const refreshToken = authState.refreshToken;
+
     if (refreshToken) {
-      logoutSession(refreshToken).catch(() => {})
+      logoutSession(refreshToken).catch(() => {});
     }
-    clearUserScopedStorage()
-    localStorage.removeItem(AUTH_STORAGE_KEY)
-    setAuthState(initialAuth)
-  }
+
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    setAuthState(initialAuth);
+  };
 
   const value = useMemo(
     () => ({
       ...authState,
       login,
-      hasRole,
-      role: primaryRole(authState.roles),
       logout,
+      hasRole,
+      role,
     }),
-    [authState],
-  )
+    [authState]
+  );
 
   return (
     <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
-  )
+  );
 }

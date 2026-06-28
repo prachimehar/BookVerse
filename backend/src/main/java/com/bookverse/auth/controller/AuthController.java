@@ -17,7 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
+import com.bookverse.writer.model.Writer;
+import com.bookverse.writer.repository.WriterRepository;
 import java.time.Instant;
 import java.util.*;
 
@@ -31,6 +32,7 @@ public class AuthController {
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
     private final GoogleTokenVerifier googleTokenVerifier;
+    private final WriterRepository writerRepository;
 
     public AuthController(
             AppUserRepository userRepository,
@@ -38,7 +40,8 @@ public class AuthController {
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             JwtProperties jwtProperties,
-            GoogleTokenVerifier googleTokenVerifier) {
+            GoogleTokenVerifier googleTokenVerifier,
+            WriterRepository writerRepository) {
 
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
@@ -46,6 +49,7 @@ public class AuthController {
         this.jwtService = jwtService;
         this.jwtProperties = jwtProperties;
         this.googleTokenVerifier = googleTokenVerifier;
+        this.writerRepository = writerRepository;
     }
 
     // ---------------- SIGNUP ----------------
@@ -162,24 +166,36 @@ public AuthResponse becomeWriter() {
     AppUser user = userRepository.findById(SecurityUtils.currentUser().id())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
-    System.out.println("BEFORE ROLES: " + user.getRoles());
-
-    if (user.getRoles() == null) {
-        user.setRoles(new ArrayList<>());
+    // normalize + add roles (as fixed earlier)
+    java.util.LinkedHashSet<String> roleSet = new java.util.LinkedHashSet<>();
+    if (user.getRoles() != null) {
+        for (String r : user.getRoles()) {
+            if (r == null || r.isBlank()) continue;
+            String normalized = r.toUpperCase().startsWith("ROLE_")
+                    ? r.toUpperCase() : "ROLE_" + r.toUpperCase();
+            roleSet.add(normalized);
+        }
     }
+    roleSet.add("ROLE_READER");
+    roleSet.add("ROLE_WRITER");
+    user.setRoles(new ArrayList<>(roleSet));
 
-    if (!user.getRoles().contains("ROLE_WRITER")) {
-        user.getRoles().add("ROLE_WRITER");
+    // ✅ create Writer profile if one doesn't already exist
+    if (user.getWriterProfileId() == null) {
+        Writer writer = new Writer();
+        writer.setName(user.getName());
+        writer.setAvatar(user.getAvatar());
+        writer.setFollowers(0);
+        writer.setBio("");
+
+        Writer savedWriter = writerRepository.save(writer);
+        user.setWriterProfileId(savedWriter.getId());
     }
 
     AppUser saved = userRepository.save(user);
 
-    System.out.println("AFTER ROLES: " + saved.getRoles());
-
     return issueTokens(saved);
 }
-
-
     // ---------------- TOKENS ----------------
     private AuthResponse issueTokens(AppUser user) {
 

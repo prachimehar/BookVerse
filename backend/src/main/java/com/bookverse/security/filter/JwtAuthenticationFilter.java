@@ -23,10 +23,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final AppUserRepository userRepository;
 
+    
+
     public JwtAuthenticationFilter(JwtService jwtService,
                                    AppUserRepository userRepository) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
+
+        
     }
 
     @Override
@@ -37,13 +41,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        // skip auth endpoints
-        if (path.startsWith("/api/auth/")
-                || path.startsWith("/v3/api-docs")
-                || path.startsWith("/swagger-ui")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+// skip only the genuinely public auth endpoints
+boolean isPublicAuthEndpoint =
+        path.equals("/api/auth/signup")
+        || path.equals("/api/auth/login")
+        || path.equals("/api/auth/google")
+        || path.equals("/api/auth/refresh");
+
+if (isPublicAuthEndpoint
+        || path.startsWith("/v3/api-docs")
+        || path.startsWith("/swagger-ui")) {
+    filterChain.doFilter(request, response);
+    return;
+}
+
 
         String header = request.getHeader("Authorization");
 
@@ -82,11 +93,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                             SecurityContextHolder.getContext().setAuthentication(auth);
                         });
-
             } catch (Exception e) {
                 SecurityContextHolder.clearContext();
             }
         }
+
+        
 
         filterChain.doFilter(request, response);
     }
