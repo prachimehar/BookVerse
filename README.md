@@ -2,7 +2,7 @@
 
 > A Full-Stack Book Publishing, Reading & Marketplace Platform built with Spring Boot, React, MongoDB, JWT Authentication, and Razorpay.
 
-BookVerse is a modern platform where readers can discover books, writers can publish and monetize their work, and administrators can manage the entire ecosystem. It supports secure authentication, role-based access control, digital book publishing, creative writing (books, poems, thoughts), and an integrated payment system for premium content.
+BookVerse is a modern platform where readers can discover books, writers can publish and monetize their work, and users can also buy and sell old books through a marketplace system. It supports secure authentication, role-based access control, digital publishing, creative writing, and integrated payments for premium content.
 
 ---
 
@@ -18,7 +18,7 @@ BookVerse is a modern platform where readers can discover books, writers can pub
 - 👤 Role-Based Access (Reader, Writer, Admin)
 - 📖 Book Publishing Platform
 - ✍️ Poems & Thoughts System (Public / Private)
-- 🛒 Paid & Free Books Marketplace
+- 🛒 Marketplace for Free, Paid & **User-Sold Old Books**
 - 💳 Razorpay Payment Integration
 - 📊 Writer Analytics Dashboard
 - ⭐ Reviews & Ratings System
@@ -42,6 +42,7 @@ BookVerse is a modern platform where readers can discover books, writers can pub
 - Search, filter, and sort books
 - Read free books
 - Purchase premium books
+- Buy second-hand / user-listed old books
 - Personal library management
 - Reading progress tracking
 - User profile management
@@ -63,9 +64,11 @@ BookVerse is a modern platform where readers can discover books, writers can pub
 
 ### 🛒 Marketplace
 - Free & Paid books system
-- Secure Razorpay payments
+- **Users can list and sell old books**
+- Secure Razorpay payment integration
 - Purchase history tracking
 - Premium content unlocking system
+- Second-hand book trading support
 
 ---
 
@@ -117,7 +120,6 @@ BookVerse is a modern platform where readers can discover books, writers can pub
 - MongoDB
 - JWT Authentication
 - REST APIs
-- Spring Data MongoDB
 
 ### Payments
 - Razorpay Payment Gateway
@@ -135,6 +137,8 @@ BookVerse is a modern platform where readers can discover books, writers can pub
 ---
 
 ## 📁 Project Structure
+
+
 BookVerse
 │
 ├── frontend
@@ -154,8 +158,6 @@ BookVerse
 │ ├── review
 │ ├── marketplace
 │ └── user
-│
-└── README.md
 
 
 ---
@@ -163,7 +165,7 @@ BookVerse
 ## 🚀 Getting Started
 
 ### Clone Repository
-```bash
+
 git clone https://github.com/yourusername/bookverse.git
 cd bookverse
 Backend Setup
@@ -179,6 +181,7 @@ npm run dev
 ###👤 Reader
 Read books
 Purchase premium books
+Buy old books from marketplace
 Access personal library
 Write reviews and ratings
 
