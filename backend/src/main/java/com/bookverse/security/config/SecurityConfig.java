@@ -25,82 +25,87 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final String allowedOrigins;
+        private final JwtAuthenticationFilter jwtAuthenticationFilter;
+        private final String allowedOrigins;
 
-    public SecurityConfig(
-            JwtAuthenticationFilter jwtAuthenticationFilter,
-            @Value("${app.cors.allowed-origins}") String allowedOrigins) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.allowedOrigins = allowedOrigins;
-    }
+        public SecurityConfig(
+                        JwtAuthenticationFilter jwtAuthenticationFilter,
+                        @Value("${app.cors.allowed-origins}") String allowedOrigins) {
+                this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+                this.allowedOrigins = allowedOrigins;
+        }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .formLogin(form -> form.disable())
-                .httpBasic(basic -> basic.disable())
-                .authorizeHttpRequests(auth -> auth
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                return http
+                                .csrf(csrf -> csrf.disable())
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .formLogin(form -> form.disable())
+                                .httpBasic(basic -> basic.disable())
+                                .authorizeHttpRequests(auth -> auth
 
-                        // public APIs
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                                                // public APIs
+                                                .requestMatchers("/api/auth/**").permitAll()
+                                                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**",
+                                                                "/swagger-ui.html")
+                                                .permitAll()
 
-                        // public GET APIs
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/books/**",
-                                "/api/writers/**",
-                                "/api/marketplace/**",
-                                "/api/reviews/**",
-                                "/api/writing/public"
-                        ).permitAll()
+                                                // public GET APIs
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/books/**",
+                                                                "/api/writers/**",
+                                                                "/api/marketplace/**",
+                                                                "/api/reviews/**",
+                                                                "/api/writing/public")
+                                                .permitAll()
 
-                        // admin only
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                                // admin only
+                                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // writer only (FIXED)
-                        .requestMatchers("/api/auth/become-writer").authenticated()
-                        .requestMatchers("/api/writing/**").hasRole("WRITER")
+                                                // writer only (FIXED)
+                                                .requestMatchers("/api/auth/become-writer").authenticated()
+                                                .requestMatchers("/api/writing/**").hasRole("WRITER")
+                                                .requestMatchers(HttpMethod.PATCH, "/api/books/*/approve")
+                                                .hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PATCH, "/api/books/*/reject")
+                                                .hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.POST, "/api/books").hasRole("WRITER")
-                        .requestMatchers(HttpMethod.PUT, "/api/books/**").hasAnyRole("WRITER", "ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/books/**").hasAnyRole("WRITER", "ADMIN")
+                                                .requestMatchers(HttpMethod.POST, "/api/books").hasRole("WRITER")
+                                                .requestMatchers(HttpMethod.PUT, "/api/books/**")
+                                                .hasAnyRole("WRITER", "ADMIN")
+                                                .requestMatchers(HttpMethod.DELETE, "/api/books/**")
+                                                .hasAnyRole("WRITER", "ADMIN")
 
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .build();
-    }
+                                                .anyRequest().authenticated())
+                                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                                .build();
+        }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
 
-        CorsConfiguration configuration = new CorsConfiguration();
+                CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(
-                Arrays.stream(allowedOrigins.split(","))
-                        .map(String::trim)
-                        .filter(o -> !o.isBlank())
-                        .toList()
-        );
+                configuration.setAllowedOrigins(
+                                Arrays.stream(allowedOrigins.split(","))
+                                                .map(String::trim)
+                                                .filter(o -> !o.isBlank())
+                                                .toList());
 
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+                configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+                configuration.setAllowedHeaders(List.of("*"));
+                configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", configuration);
 
-        return source;
-    }
+                return source;
+        }
 }

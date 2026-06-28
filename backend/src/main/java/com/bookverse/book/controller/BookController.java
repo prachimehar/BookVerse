@@ -108,20 +108,21 @@ public List<String> categories() {
                     boolean purchased = userId != null &&
                             purchaseRepository.findByUserIdAndBookId(userId, id).isPresent();
 
-                    if (book.getPrice() > 0 && !purchased) {
+                    // Full access if the book is free OR the reader has purchased it.
+                    boolean fullAccess = book.getPrice() == 0 || purchased;
 
-                        List<Chapter> preview = book.getChapters().stream()
-                                .map(ch -> {
-                                    Chapter c = new Chapter();
-                                    c.setTitle(ch.getTitle());
-                                    c.setUnlocked(ch.isUnlocked());
-                                    c.setContent(ch.isUnlocked() ? ch.getContent() : "");
-                                    return c;
-                                })
-                                .toList();
+                    List<Chapter> chapters = book.getChapters().stream()
+                            .map(ch -> {
+                                boolean unlocked = fullAccess || ch.isUnlocked();
+                                Chapter c = new Chapter();
+                                c.setTitle(ch.getTitle());
+                                c.setUnlocked(unlocked);
+                                c.setContent(unlocked ? ch.getContent() : "");
+                                return c;
+                            })
+                            .toList();
 
-                        book.setChapters(preview);
-                    }
+                    book.setChapters(chapters);
 
                     return ResponseEntity.ok(book);
                 })
@@ -136,6 +137,11 @@ public List<String> categories() {
 
         validateBook(book);
 
+        if (bookRepository.existsByWriterIdAndTitleIgnoreCase(principal.id(), book.getTitle().trim())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "You already have a book with this title");
+        }
+
         Instant now = Instant.now();
 
         book.setId(null);
@@ -147,8 +153,9 @@ public List<String> categories() {
         if (book.getStatus() == null)
             book.setStatus(book.getPrice() > 0 ? "PAID" : "FREE");
 
-        if (book.getApprovalStatus() == null)
-            book.setApprovalStatus(book.getPrice() > 0 ? "PENDING" : "APPROVED");
+        // approvalStatus is NEVER taken from client input — always PENDING on create,
+        // for both FREE and PAID books. Only admin endpoint can change this.
+        book.setApprovalStatus("PENDING");
 
         if (book.getRating() == 0)
             book.setRating(4.5);
@@ -179,7 +186,13 @@ public List<String> categories() {
                     existing.setPrice(incoming.getPrice());
 
                     existing.setStatus(incoming.getPrice() > 0 ? "PAID" : "FREE");
-                    existing.setApprovalStatus(incoming.getPrice() > 0 ? "PENDING" : "APPROVED");
+
+                    // approvalStatus is NEVER taken from client input. Any edit by the
+                    // writer resets it to PENDING so admin re-reviews. Admin can also
+                    // edit, but should use the dedicated approve/reject endpoints instead.
+                    if (!principal.roles().contains("ROLE_ADMIN")) {
+                        existing.setApprovalStatus("PENDING");
+                    }
 
                     existing.setUpdatedAt(Instant.now());
 
@@ -207,11 +220,71 @@ public List<String> categories() {
         return ResponseEntity.noContent().build();
     }
 
+    // ---------------- ADMIN: APPROVE BOOK ----------------
+    @PatchMapping("/{id}/approve")
+    public ResponseEntity<Book> approve(@PathVariable String id) {
+
+        BookVersePrincipal principal = SecurityUtils.currentUser();
+        if (!principal.roles().contains("ROLE_ADMIN")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin access required");
+        }
+
+        return bookRepository.findById(id)
+                .map(book -> {
+                    book.setApprovalStatus("APPROVED");
+                    book.setUpdatedAt(Instant.now());
+                    return ResponseEntity.ok(bookRepository.save(book));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // ---------------- ADMIN: REJECT BOOK ----------------
+    @PatchMapping("/{id}/reject")
+    public ResponseEntity<Book> reject(@PathVariable String id) {
+
+        BookVersePrincipal principal = SecurityUtils.currentUser();
+        if (!principal.roles().contains("ROLE_ADMIN")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin access required");
+        }
+
+        return bookRepository.findById(id)
+                .map(book -> {
+                    book.setApprovalStatus("REJECTED");
+                    book.setUpdatedAt(Instant.now());
+                    return ResponseEntity.ok(bookRepository.save(book));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     // ---------------- WRITER BOOKS ----------------
     @GetMapping("/writer/books")
 public List<Book> books() {
     return bookRepository.findByWriterId(SecurityUtils.currentUser().id());
 }
+
+// ---------------- TOGGLE LIKE ----------------
+    @PostMapping("/{id}/like")
+    public ResponseEntity<Book> toggleLike(@PathVariable String id) {
+
+        String userId = SecurityUtils.currentUser().id();
+
+        return bookRepository.findById(id)
+                .map(book -> {
+
+                    if (book.getLikedBy() == null) {
+                        book.setLikedBy(new java.util.ArrayList<>());
+                    }
+
+                    if (book.getLikedBy().contains(userId)) {
+                        book.getLikedBy().remove(userId);
+                    } else {
+                        book.getLikedBy().add(userId);
+                    }
+
+                    return ResponseEntity.ok(bookRepository.save(book));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
 
     // ---------------- HELPERS ----------------
     private void validateBook(Book book) {

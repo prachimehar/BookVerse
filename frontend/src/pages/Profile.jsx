@@ -94,12 +94,12 @@ export default function Profile() {
           <div className="flex gap-3">
 
             <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-2 rounded-3xl border px-4 py-3 text-sm font-semibold hover:bg-rose-50"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </button>
+  onClick={handleLogout}
+  className="inline-flex items-center gap-2 rounded-3xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-rose-50 hover:text-rose-700 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-rose-950/50 dark:hover:text-rose-200"
+>
+  <LogOut className="h-4 w-4" />
+  Sign out
+</button>
 
             {!hasRole("writer") && !hasRole("admin") && (
               <button

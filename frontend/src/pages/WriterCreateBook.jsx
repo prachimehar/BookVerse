@@ -37,7 +37,6 @@ export default function WriterCreateBook() {
       cover: form.cover,
       price: type === 'PAID' ? Number(form.price || 0) : 0,
       status: type,
-      approvalStatus: publish && type === 'FREE' ? 'APPROVED' : 'PENDING',
       chapters: [{ title: form.chapterTitle || 'Opening Chapter', unlocked: true, content: form.content }],
     })
     toast.success(publish ? 'Book submitted' : 'Draft saved')

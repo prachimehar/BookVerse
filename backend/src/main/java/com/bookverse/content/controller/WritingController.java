@@ -31,9 +31,19 @@ public class WritingController {
         BookVersePrincipal principal = SecurityUtils.currentUser();
         validateWriting(incoming);
 
+        String title = normalizeBlank(incoming.getTitle());
+
+        // Only block duplicates when a title is actually given —
+        // untitled writings are allowed to repeat.
+        if (title != null &&
+                contentRepository.existsByAuthorIdAndTitleIgnoreCaseAndType(principal.id(), title, incoming.getType())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "You already have a " + incoming.getType().name().toLowerCase() + " with this title");
+        }
+
         Instant now = Instant.now();
         Content writing = new Content();
-        writing.setTitle(normalizeBlank(incoming.getTitle()));
+        writing.setTitle(title);
         writing.setContent(incoming.getContent().trim());
         writing.setType(incoming.getType());
         writing.setVisibility(incoming.getVisibility() == null ? ContentVisibility.PRIVATE : incoming.getVisibility());

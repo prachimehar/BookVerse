@@ -28,5 +28,6 @@ public class Book {
     private List<Chapter> chapters = new ArrayList<>();
     private Instant createdAt;
     private Instant updatedAt;
+    private List<String> likedBy = new ArrayList<>();
     
 }
