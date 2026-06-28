@@ -180,31 +180,36 @@ npm run dev
 
 ```
 
+## 🔐 User Roles
+
+### 👤 Reader
+- Read books  
+- Purchase premium books  
+- Buy old books from marketplace  
+- Access personal library  
+- Write reviews and ratings  
+
 ---
-##🔐 User Roles
 
-###👤 Reader
-Read books
-Purchase premium books
-Buy old books from marketplace
-Access personal library
-Write reviews and ratings
+### ✍️ Writer
+- Publish books  
+- Upload chapters  
+- Create poems & thoughts  
+- Manage public/private writings  
+- View analytics dashboard  
 
-###✍️ Writer
-Publish books
-Upload chapters
-Create poems & thoughts
-Manage public/private writings
-View analytics dashboard
+---
 
-###🛡 Admin
-Manage users
-Approve or reject books
-Moderate content
-Control marketplace
+### 🛡 Admin
+- Manage users  
+- Approve or reject books  
+- Moderate content  
+- Control marketplace  
 
-###🌟 Future Improvements
-Notifications system
-AI book recommendations
-Subscription model for writers
+---
+
+## 🌟 Future Improvements
+- Notifications system  
+- AI book recommendations  
+- Subscription model for writers  
 Mobile app (React Native)
