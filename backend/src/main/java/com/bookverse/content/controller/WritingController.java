@@ -7,6 +7,8 @@ import com.bookverse.content.repository.ContentRepository;
 import com.bookverse.security.BookVersePrincipal;
 import com.bookverse.security.SecurityUtils;
 import com.bookverse.shared.enums.ApprovalStatus;
+import com.bookverse.shared.service.EmailService;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,9 +23,11 @@ public class WritingController {
     private static final List<ContentType> WRITING_TYPES = List.of(ContentType.POEM, ContentType.THOUGHT);
 
     private final ContentRepository contentRepository;
+    private final EmailService emailService;
 
-    public WritingController(ContentRepository contentRepository) {
+    public WritingController(ContentRepository contentRepository, EmailService emailService) {
         this.contentRepository = contentRepository;
+        this.emailService = emailService;
     }
 
     @PostMapping
@@ -53,7 +57,15 @@ public class WritingController {
         writing.setCreatedAt(now);
         writing.setUpdatedAt(now);
 
-        return contentRepository.save(writing);
+         Content saved = contentRepository.save(writing);
+        if (saved.getVisibility() == ContentVisibility.PUBLIC) {
+            emailService.notifyNewWritingPendingApproval(
+                saved.getTitle(),
+                saved.getAuthorName(),
+                saved.getType().name()
+            );
+        }
+        return saved;
     }
 
     @GetMapping("/my")

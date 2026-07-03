@@ -4,6 +4,7 @@ import com.bookverse.marketplace.model.UsedBook;
 import com.bookverse.marketplace.repository.UsedBookRepository;
 import com.bookverse.security.BookVersePrincipal;
 import com.bookverse.security.SecurityUtils;
+import com.bookverse.shared.service.EmailService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,9 +16,13 @@ import java.util.List;
 @RequestMapping("/api/marketplace")
 public class MarketplaceController {
     private final UsedBookRepository usedBookRepository;
+    private final EmailService emailService;
 
-    public MarketplaceController(UsedBookRepository usedBookRepository) {
+    public MarketplaceController(
+            UsedBookRepository usedBookRepository,
+            EmailService emailService) {
         this.usedBookRepository = usedBookRepository;
+        this.emailService = emailService;
     }
 
     @GetMapping
@@ -46,7 +51,13 @@ public class MarketplaceController {
         usedBook.setApproved(false);
         usedBook.setSold(false);
         usedBook.setCreatedAt(Instant.now());
-        return ResponseEntity.ok(usedBookRepository.save(usedBook));
+
+        UsedBook saved = usedBookRepository.save(usedBook);
+        emailService.notifyNewMarketplaceListingPendingApproval(
+                saved.getTitle(),
+                saved.getSellerName()
+        );
+        return ResponseEntity.ok(saved);
     }
 
     @GetMapping("/mine")
@@ -79,12 +90,12 @@ public class MarketplaceController {
         if (!canModify(listing, SecurityUtils.currentUser())) {
             return ResponseEntity.status(403).build();
         }
-
         usedBookRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
     private boolean canModify(UsedBook listing, BookVersePrincipal principal) {
-        return principal.roles().stream().anyMatch("admin"::equalsIgnoreCase) || principal.id().equals(listing.getSellerId());
+        return principal.roles().stream().anyMatch("admin"::equalsIgnoreCase)
+                || principal.id().equals(listing.getSellerId());
     }
 }

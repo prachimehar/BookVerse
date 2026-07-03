@@ -80,7 +80,13 @@ public class SecurityConfig {
 
                                                 .anyRequest().authenticated())
                                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                                .headers(headers -> headers
+                                                .frameOptions(frame -> frame.deny())
+                                                .addHeaderWriter((request, response) -> response.setHeader(
+                                                                "Cross-Origin-Opener-Policy",
+                                                                "same-origin-allow-popups")))
                                 .build();
+
         }
 
         @Bean

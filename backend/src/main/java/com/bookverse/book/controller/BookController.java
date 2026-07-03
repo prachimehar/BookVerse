@@ -8,6 +8,8 @@ import com.bookverse.purchase.repository.PurchaseRepository;
 import com.bookverse.review.repository.ReviewRepository;
 import com.bookverse.security.BookVersePrincipal;
 import com.bookverse.security.SecurityUtils;
+import com.bookverse.shared.service.EmailService;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -30,17 +32,20 @@ public class BookController {
     private final LibraryItemRepository libraryItemRepository;
     private final PurchaseRepository purchaseRepository;
     private final ReviewRepository reviewRepository;
+    private final EmailService emailService;
 
     public BookController(
             BookRepository bookRepository,
             LibraryItemRepository libraryItemRepository,
             PurchaseRepository purchaseRepository,
-            ReviewRepository reviewRepository) {
+            ReviewRepository reviewRepository,
+        EmailService emailService) {
 
         this.bookRepository = bookRepository;
         this.libraryItemRepository = libraryItemRepository;
         this.purchaseRepository = purchaseRepository;
         this.reviewRepository = reviewRepository;
+        this.emailService = emailService;
     }
 
     // ---------------- GET ALL BOOKS ----------------
@@ -163,7 +168,9 @@ public List<String> categories() {
         if (book.getChapters() == null || book.getChapters().isEmpty())
             book.setChapters(List.of(new Chapter("Opening Chapter", true, "")));
 
-        return bookRepository.save(book);
+        Book saved = bookRepository.save(book);
+        emailService.notifyNewBookPendingApproval(saved.getTitle(), saved.getAuthor());
+        return saved;
     }
 
     // ---------------- UPDATE BOOK ----------------
@@ -184,19 +191,27 @@ public List<String> categories() {
                     existing.setGenre(incoming.getGenre());
                     existing.setTags(incoming.getTags());
                     existing.setPrice(incoming.getPrice());
-
+                    existing.setChapters(incoming.getChapters());
+                    
                     existing.setStatus(incoming.getPrice() > 0 ? "PAID" : "FREE");
 
                     // approvalStatus is NEVER taken from client input. Any edit by the
                     // writer resets it to PENDING so admin re-reviews. Admin can also
                     // edit, but should use the dedicated approve/reject endpoints instead.
-                    if (!principal.roles().contains("ROLE_ADMIN")) {
+                    boolean writerEdit = !principal.roles().contains("ROLE_ADMIN");
+                    if (writerEdit) {
                         existing.setApprovalStatus("PENDING");
                     }
 
                     existing.setUpdatedAt(Instant.now());
 
-                    return ResponseEntity.ok(bookRepository.save(existing));
+                    Book saved = bookRepository.save(existing);
+
+                    if (writerEdit) {
+                        emailService.notifyBookUpdatedPendingApproval(saved.getTitle(), saved.getAuthor());
+                    }
+
+                    return ResponseEntity.ok(saved);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }

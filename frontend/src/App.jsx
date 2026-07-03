@@ -40,7 +40,6 @@ function App() {
   const { user, hasRole } = useAuth();
   const { pathname } = useLocation();
 
-  console.log("API URL:", import.meta.env.VITE_API_URL);
   const isWriterRoute = pathname === "/writer" || pathname.startsWith("/writer/");
   const showWriterSidebar = user && hasRole(ROLES.WRITER) && isWriterRoute;
 
