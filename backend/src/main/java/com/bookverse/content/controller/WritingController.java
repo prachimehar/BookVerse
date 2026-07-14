@@ -40,7 +40,8 @@ public class WritingController {
         // Only block duplicates when a title is actually given —
         // untitled writings are allowed to repeat.
         if (title != null &&
-                contentRepository.existsByAuthorIdAndTitleIgnoreCaseAndType(principal.id(), title, incoming.getType())) {
+                contentRepository.existsByAuthorIdAndTitleIgnoreCaseAndType(principal.id(), title,
+                        incoming.getType())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "You already have a " + incoming.getType().name().toLowerCase() + " with this title");
         }
@@ -57,14 +58,13 @@ public class WritingController {
         writing.setCreatedAt(now);
         writing.setUpdatedAt(now);
 
-         Content saved = contentRepository.save(writing);
-        if (saved.getVisibility() == ContentVisibility.PUBLIC) {
-            emailService.notifyNewWritingPendingApproval(
+        Content saved = contentRepository.save(writing);
+
+        emailService.notifyNewWritingPendingApproval(
                 saved.getTitle(),
                 saved.getAuthorName(),
-                saved.getType().name()
-            );
-        }
+                saved.getType().name());
+
         return saved;
     }
 
@@ -85,8 +85,7 @@ public class WritingController {
         return contentRepository.findByVisibilityAndApprovalStatusAndTypeInOrderByCreatedAtDesc(
                 ContentVisibility.PUBLIC,
                 ApprovalStatus.APPROVED,
-                types
-        );
+                types);
     }
 
     @GetMapping("/{id}")
@@ -115,10 +114,19 @@ public class WritingController {
                     existing.setTitle(normalizeBlank(incoming.getTitle()));
                     existing.setContent(incoming.getContent().trim());
                     existing.setType(incoming.getType());
-                    existing.setVisibility(incoming.getVisibility() == null ? ContentVisibility.PRIVATE : incoming.getVisibility());
+                    existing.setVisibility(
+                            incoming.getVisibility() == null ? ContentVisibility.PRIVATE : incoming.getVisibility());
                     existing.setApprovalStatus(approvalFor(existing.getVisibility()));
                     existing.setUpdatedAt(Instant.now());
-                    return ResponseEntity.ok(contentRepository.save(existing));
+
+                    Content saved = contentRepository.save(existing);
+
+                    emailService.notifyNewWritingPendingApproval(
+                            saved.getTitle(),
+                            saved.getAuthorName(),
+                            saved.getType().name());
+
+                    return ResponseEntity.ok(saved);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -158,7 +166,7 @@ public class WritingController {
         return isOwner(writing, principal)
                 || isAdmin(principal)
                 || (writing.getVisibility() == ContentVisibility.PUBLIC
-                && writing.getApprovalStatus() == ApprovalStatus.APPROVED);
+                        && writing.getApprovalStatus() == ApprovalStatus.APPROVED);
     }
 
     private void ensureCanManage(Content writing, BookVersePrincipal principal) {

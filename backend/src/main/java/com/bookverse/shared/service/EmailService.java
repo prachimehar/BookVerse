@@ -43,6 +43,7 @@ public class EmailService {
 
     @Async
     public void notifyNewWritingPendingApproval(String title, String authorName, String type) {
+        System.out.println("🔥 Writing notification called: " + type);
         send(
             "✍️ New " + type + " Pending Approval",
             "A new " + type.toLowerCase() + " has been submitted for public visibility.\n\n" +
