@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: bookverse-backend
+
+  data:
+    mongodb:
+      uri: ${MONGODB_URI}
+    serialization:
+      INDENT_OUTPUT: true
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:adminbookverse@gmail.com}
+    password:  ${MAIL_PASSWORD:gxpzcwufzdchsamr}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: smtp.gmail.com
+        debug: false
+
+server:
+  port: ${PORT:8080}
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173,https://bookverse.vercel.app}
+
+jwt:
+  secret: ${JWT_SECRET:cb1xq3fSFx9m4hnjvCse+gxZPFxFFMcyAVjozlvB0YoXYR2xuEut9Keuek40uX3Ht9oH0nvQx233ghG/5eRd0w==}
+  access-token-expiration: 900000
+  refresh-token-expiration: 604800000
+  issuer: bookverse
+
+google:
+  client-id: ${GOOGLE_CLIENT_ID:502840310207-lostkpb3ct42m7cc9hr54o9cbd322vm1.apps.googleusercontent.com}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
