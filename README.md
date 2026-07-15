@@ -18,7 +18,7 @@ BookVerse is a modern platform where readers can discover books, writers can pub
 - 👤 Role-Based Access (Reader, Writer, Admin)
 - 📖 Book Publishing Platform
 - ✍️ Poems & Thoughts System (Public / Private)
-- 🛒 Marketplace for Free, Paid & **User-Sold Old Books**
+- 🛒 Marketplace for Free, Paid & User-Sold Old Books
 - 💳 Razorpay Payment Integration
 - 📊 Writer Analytics Dashboard
 - ⭐ Reviews & Ratings System
@@ -88,6 +88,7 @@ BookVerse is a modern platform where readers can discover books, writers can pub
 - Review moderation
 - Marketplace control
 - Ban / unban users
+-  Notifications system 
 
 ---
 
@@ -208,8 +209,7 @@ npm run dev
 
 ---
 
-## 🌟 Future Improvements
-- Notifications system  
+## 🌟 Future Improvements 
 - AI book recommendations  
 - Subscription model for writers  
 Mobile app (React Native)
