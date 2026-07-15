@@ -11,8 +11,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME:adminbookverse@gmail.com}
-    password:  ${MAIL_PASSWORD:gxpzcwufzdchsamr}
+    username: ${MAIL_USERNAME}
+    password:  ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -32,7 +32,7 @@ app:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173,https://bookverse.vercel.app}
 
 jwt:
-  secret: ${JWT_SECRET:cb1xq3fSFx9m4hnjvCse+gxZPFxFFMcyAVjozlvB0YoXYR2xuEut9Keuek40uX3Ht9oH0nvQx233ghG/5eRd0w==}
+  secret: ${JWT_SECRET}
   access-token-expiration: 900000
   refresh-token-expiration: 604800000
   issuer: bookverse
