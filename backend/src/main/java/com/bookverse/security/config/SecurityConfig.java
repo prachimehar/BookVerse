@@ -44,13 +44,14 @@ public class SecurityConfig {
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .formLogin(form -> form.disable())
                                 .httpBasic(basic -> basic.disable())
-                                .authorizeHttpRequests(auth -> auth
+                                .authorizeHttpRequests(auth -> auth 
 
                                                 // public APIs
                                                 .requestMatchers("/api/auth/**").permitAll()
                                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**",
                                                                 "/swagger-ui.html")
                                                 .permitAll()
+                                                .requestMatchers("/actuator/health").permitAll()
 
                                                 // public GET APIs
                                                 .requestMatchers(HttpMethod.GET,

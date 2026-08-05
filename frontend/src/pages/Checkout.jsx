@@ -3,6 +3,7 @@ import { getBook, verifyPayment } from "../services/api";
 import { useAsyncData } from "../hooks/useAsyncData";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
+import { getRuntimeConfigValue } from "../config/runtimeConfig";
 
 export default function Checkout() {
   const { id } = useParams();
@@ -20,7 +21,7 @@ export default function Checkout() {
     }
 
     const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY,
+      key: getRuntimeConfigValue("VITE_RAZORPAY_KEY"),
       amount: book.price * 100,
       currency: "INR",
       name: "BookVerse",

@@ -1,0 +1,5 @@
+window.__BOOKVERSE_CONFIG__ = {
+  VITE_API_URL: "/api",
+  VITE_GOOGLE_CLIENT_ID: "",
+  VITE_RAZORPAY_KEY: "",
+};

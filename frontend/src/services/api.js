@@ -1,7 +1,8 @@
 import axios from 'axios'
+import { getRuntimeConfigValue } from '../config/runtimeConfig'
 
 const client = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
+  baseURL: getRuntimeConfigValue('VITE_API_URL', 'http://localhost:8080/api'),
 })
 
 function getStoredAuth() {
