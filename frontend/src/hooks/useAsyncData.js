@@ -1,27 +1,5 @@
 import { useEffect, useState } from "react";
 
-function normalizeLoaderResult(result, initialValue) {
-  if (Array.isArray(initialValue)) {
-    if (Array.isArray(result)) {
-      return { value: result, invalid: false };
-    }
-    return { value: [], invalid: true };
-  }
-
-  if (
-    initialValue !== null &&
-    typeof initialValue === "object" &&
-    !Array.isArray(initialValue)
-  ) {
-    if (result !== null && typeof result === "object" && !Array.isArray(result)) {
-      return { value: result, invalid: false };
-    }
-    return { value: initialValue, invalid: true };
-  }
-
-  return { value: result, invalid: false };
-}
-
 export function useAsyncData(loader, initialValue = null, dependencies = []) {
   const [data, setData] = useState(initialValue);
   const [loading, setLoading] = useState(true);
@@ -36,18 +14,9 @@ export function useAsyncData(loader, initialValue = null, dependencies = []) {
 
     loader()
       .then((result) => {
-        if (!active) {
-          return;
+        if (active) {
+          setData(result);
         }
-
-        const { value, invalid } = normalizeLoaderResult(result, initialValue);
-
-        if (invalid) {
-          console.error("Unexpected API response shape", { result, initialValue });
-          setError(new Error("Unexpected API response shape"));
-        }
-
-        setData(value);
       })
       .catch((err) => {
         if (active) {

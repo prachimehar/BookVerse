@@ -7,12 +7,17 @@ import { getBooks, getCategories, getWriters } from '../services/api'
 
 export default function Home() {
   const { data } = useAsyncData(async () => {
-    const [books, writers, categories] = await Promise.all([getBooks(), getWriters(), getCategories()])
-    return { books, writers, categories }
-  }, [])
-  const books = data?.books || []
-  const writers = data?.writers || []
-  const categories = data?.categories || []
+    const [books, writers, categories] = await Promise.all([
+      getBooks(),
+      getWriters(),
+      getCategories(),
+    ]);
+    return { books, writers, categories };
+  }, null);
+
+  const books = Array.isArray(data?.books) ? data.books : [];
+  const writers = Array.isArray(data?.writers) ? data.writers : [];
+  const categories = Array.isArray(data?.categories) ? data.categories : [];
   const featuredBooks = books.slice(0, 4)
   const trendingWriters = writers
 
