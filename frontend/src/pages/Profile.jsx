@@ -23,6 +23,8 @@ export default function Profile() {
   const { data: purchases = [] } = useAsyncData(getPurchases, [], [user?.id]);
   const { data: library = [] } = useAsyncData(getLibrary, [], [user?.id]);
 
+  const roleLabels = (Array.isArray(roles) ? roles : ["reader"])
+
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -73,12 +75,12 @@ export default function Profile() {
 
                 <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 font-semibold">
                   <UserRound className="h-4 w-4" />
-                  {(roles || ["reader"])
-  .map((r) => {
-    const clean = r.replace(/^ROLE_/i, "").toLowerCase();
-    return clean.charAt(0).toUpperCase() + clean.slice(1);
-  })
-  .join(", ")}
+                  {roleLabels
+                    .map((r) => {
+                      const clean = r.replace(/^ROLE_/i, "").toLowerCase();
+                      return clean.charAt(0).toUpperCase() + clean.slice(1);
+                    })
+                    .join(", ")}
                 </span>
 
                 <span className="inline-flex items-center gap-2">

@@ -28,8 +28,19 @@ client.interceptors.request.use((config) => {
   return config
 })
 
+function isHtmlPayload(data) {
+  return typeof data === 'string' && /^\s*</.test(data)
+}
+
 client.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (isHtmlPayload(response.data)) {
+      return Promise.reject(
+        new Error('API returned HTML instead of JSON. Check VITE_API_URL and /api proxy configuration.'),
+      )
+    }
+    return response
+  },
   async (error) => {
     const originalRequest = error.config
     const auth = getStoredAuth()
