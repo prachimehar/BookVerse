@@ -142,6 +142,11 @@ export async function loginWithGoogle(credential) {
   return data
 }
 
+export async function loginAsGuest() {
+  const { data } = await client.post('/auth/guest')
+  return data
+}
+
 export async function logoutSession(refreshToken) {
   await client.post('/auth/logout', { refreshToken })
 }

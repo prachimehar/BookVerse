@@ -8,6 +8,7 @@ import com.bookverse.security.jwt.JwtProperties;
 import com.bookverse.security.jwt.JwtService;
 import com.bookverse.security.oauth.GoogleTokenVerifier;
 import com.bookverse.security.oauth.GoogleUserInfo;
+import com.bookverse.user.Context.UserContext;
 import com.bookverse.user.model.AppUser;
 import com.bookverse.user.repository.AppUserRepository;
 import jakarta.validation.Valid;
@@ -121,6 +122,30 @@ public class AuthController {
         user.setAvatar(googleUser.picture());
 
         return issueTokens(userRepository.save(user));
+    }
+
+    // ---------------- GUEST LOGIN ----------------
+    @PostMapping("/guest")
+    public AuthResponse guestLogin() {
+        AppUser user = userRepository.findById(UserContext.DEMO_USER_ID)
+                .orElseGet(this::ensureGuestUser);
+
+        if (user.isBanned()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account disabled");
+        }
+
+        return issueTokens(user);
+    }
+
+    private AppUser ensureGuestUser() {
+        AppUser user = new AppUser();
+        user.setId(UserContext.DEMO_USER_ID);
+        user.setName(UserContext.DEMO_USER_NAME);
+        user.setEmail("reader@bookverse.app");
+        user.setRoles(new ArrayList<>(List.of("ROLE_READER")));
+        user.setProvider("guest");
+        user.setBanned(false);
+        return userRepository.save(user);
     }
 
     // ---------------- REFRESH ----------------

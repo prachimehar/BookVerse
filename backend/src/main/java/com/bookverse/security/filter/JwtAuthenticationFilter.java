@@ -46,6 +46,7 @@ boolean isPublicAuthEndpoint =
         path.equals("/api/auth/signup")
         || path.equals("/api/auth/login")
         || path.equals("/api/auth/google")
+        || path.equals("/api/auth/guest")
         || path.equals("/api/auth/refresh");
 
 if (isPublicAuthEndpoint
