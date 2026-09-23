@@ -131,10 +131,11 @@ public class AuthController {
                 .orElseGet(this::ensureGuestUser);
 
         if (user.isBanned()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account disabled");
+            user.setBanned(false);
+            user = userRepository.save(user);
         }
 
-        return issueTokens(user);
+        return issueGuestTokens(user);
     }
 
     private AppUser ensureGuestUser() {
@@ -222,6 +223,15 @@ public AuthResponse becomeWriter() {
     return issueTokens(saved);
 }
     // ---------------- TOKENS ----------------
+    private AuthResponse issueGuestTokens(AppUser user) {
+        return new AuthResponse(
+                toUserDto(user),
+                jwtService.createAccessToken(user),
+                null,
+                "Bearer"
+        );
+    }
+
     private AuthResponse issueTokens(AppUser user) {
 
         RefreshToken refreshToken = new RefreshToken();

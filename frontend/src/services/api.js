@@ -19,6 +19,10 @@ function setStoredAuth(auth) {
 }
 
 client.interceptors.request.use((config) => {
+  if (config.skipAuth) {
+    return config
+  }
+
   const auth = getStoredAuth()
 
   if (auth?.accessToken) {
@@ -46,7 +50,12 @@ client.interceptors.response.use(
     const auth = getStoredAuth()
 
 const status = error.response?.status
-if ((status === 401 || status === 403) && auth?.refreshToken && !originalRequest?._retry) {      
+if (
+  (status === 401 || status === 403)
+  && auth?.refreshToken
+  && !originalRequest?._retry
+  && !originalRequest?.skipAuthRefresh
+) {
   originalRequest._retry = true
       try {
         const { data } = await axios.post(`${client.defaults.baseURL}/auth/refresh`, {
@@ -143,7 +152,10 @@ export async function loginWithGoogle(credential) {
 }
 
 export async function loginAsGuest() {
-  const { data } = await client.post('/auth/guest')
+  const { data } = await client.post('/auth/guest', null, {
+    skipAuth: true,
+    skipAuthRefresh: true,
+  })
   return data
 }
 

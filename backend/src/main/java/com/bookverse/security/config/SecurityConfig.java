@@ -46,7 +46,11 @@ public class SecurityConfig {
                                 .httpBasic(basic -> basic.disable())
                                 .authorizeHttpRequests(auth -> auth 
 
-                                                // public APIs
+                                                // authenticated auth routes (must come before /api/auth/**)
+                                                .requestMatchers("/api/auth/become-writer").authenticated()
+                                                .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+
+                                                // public auth APIs (includes /api/auth/guest)
                                                 .requestMatchers("/api/auth/**").permitAll()
                                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**",
                                                                 "/swagger-ui.html")
@@ -65,8 +69,7 @@ public class SecurityConfig {
                                                 // admin only
                                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                                                // writer only (FIXED)
-                                                .requestMatchers("/api/auth/become-writer").authenticated()
+                                                // writer only
                                                 .requestMatchers("/api/writing/**").hasRole("WRITER")
                                                 .requestMatchers(HttpMethod.PATCH, "/api/books/*/approve")
                                                 .hasRole("ADMIN")

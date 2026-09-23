@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../hooks/useAuth'
@@ -20,9 +20,26 @@ export default function Login() {
   const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(false)
   const [guestLoading, setGuestLoading] = useState(false)
+  const prefetchedGuestAuth = useRef(null)
 
   const { login } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    let cancelled = false
+
+    loginAsGuest()
+      .then((authPayload) => {
+        if (!cancelled) {
+          prefetchedGuestAuth.current = authPayload
+        }
+      })
+      .catch(() => {})
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const updateField = (field, value) => {
     setForm((current) => ({
@@ -45,7 +62,10 @@ export default function Login() {
     setGuestLoading(true)
 
     try {
-      const authPayload = await loginAsGuest()
+      const authPayload =
+        prefetchedGuestAuth.current || (await loginAsGuest())
+
+      prefetchedGuestAuth.current = null
 
       login(authPayload)
       toast.success('Welcome, Guest!')
